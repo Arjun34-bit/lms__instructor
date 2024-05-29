@@ -1,35 +1,53 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "../Navbar/Navbar";
 import "./Course.css";
 import Modal from "./CourseModal";
 import { Link } from "react-router-dom";
 
 const Course = () => {
-  const [courses, setCourses] = useState([
-    { id: 1, name: "Course 1", description: "Description for Course 1" },
-    { id: 2, name: "Course 2", description: "Description for Course 2" },
-  ]);
-
+  const [courses, setCourses] = useState([]);
   const [newCourseName, setNewCourseName] = useState("");
   const [newCourseDescription, setNewCourseDescription] = useState("");
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const handleAddCourse = () => {
-    if (newCourseName.trim() !== "") {
-      const newCourse = {
-        id: courses.length + 1,
-        name: newCourseName,
-        description: newCourseDescription,
-      };
-      setCourses([...courses, newCourse]);
-      setNewCourseName("");
-      setNewCourseDescription("");
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const response = await fetch("http://localhost:8000/api/courses");
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        const data = await response.json();
+        setCourses(data);
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, []);
+
+ 
+
+  const handleRemoveCourse = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:8000/api/courses/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      setCourses(courses.filter((course) => course.id !== id));
+    } catch (error) {
+      setError(error.message);
     }
-  };
-
-  const handleRemoveCourse = (id) => {
-    setCourses(courses.filter((course) => course.id !== id));
   };
 
   const handleViewDescription = (id) => {
@@ -37,6 +55,14 @@ const Course = () => {
     setSelectedCourse(course);
     setModalOpen(true);
   };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
 
   return (
     <>
@@ -97,6 +123,21 @@ const Course = () => {
           </div>
         </div>
       </Link>
+      <div>
+        <input
+          type="text"
+          value={newCourseName}
+          onChange={(e) => setNewCourseName(e.target.value)}
+          placeholder="Course Name"
+        />
+        <input
+          type="text"
+          value={newCourseDescription}
+          onChange={(e) => setNewCourseDescription(e.target.value)}
+          placeholder="Course Description"
+        />
+        {/* <button onClick={handleAddCourse}>Add Course</button> */}
+      </div>
     </>
   );
 };

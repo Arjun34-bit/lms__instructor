@@ -128,130 +128,126 @@ h2 {
 
 .addcourse-btn box-icon {
   font-weight: 700;
- 
 }
 
 /*add course form css  */
 .form-container {
-    margin: 0 auto; 
-    margin-top: 130px;
-    width: 400px;
-   
-    padding: 32px 24px;
-    font-size: 14px;
-    font-family: inherit;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    box-sizing: border-box;
-    border-radius: 25px;
-    background-size: 200% 100%;
-    border: 6px solid transparent;
-    background-clip: padding-box, border-box; 
-    background-origin: border-box; 
-    border-image: 
+  margin: 0 auto;
+  margin-top: 90px;
+  width: 950px;
+  background: linear-gradient(to right, #092941, #266493);
+  padding: 32px 24px;
+  font-size: 14px;
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
+  border-radius: 25px;
+  background-size: 200% 100%;
+  border: 6px solid transparent;
+  background-clip: padding-box, border-box;
+  background-origin: border-box;
+  /* border-image: 
       linear-gradient(to right, #092941, #266493); 
     border-image-slice: 1;  
-    box-shadow: rgba(50, 50, 93, 0.25) 0px 50px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px, rgba(10, 37, 64, 0.35) 0px -2px 6px 0px inset;
+    box-shadow: rgba(50, 50, 93, 0.25) 0px 50px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px, rgba(10, 37, 64, 0.35) 0px -2px 6px 0px inset; */
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
   }
-  
-  @keyframes gradient {
-    0% {
-      background-position: 0% 50%;
-    }
-  
-    50% {
-      background-position: 100% 50%;
-    }
-  
-    100% {
-      background-position: 0% 50%;
-    }
+
+  50% {
+    background-position: 100% 50%;
   }
-  
-  .form-container button:active {
-    scale: 0.95;
+
+  100% {
+    background-position: 0% 50%;
   }
-  
-  .form-container .form {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-  
-  .form-container .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-  
-  .form-container .form-group label {
-    display: block;
-    margin-bottom: 5px;
-    color: black;
-    font-weight: 600;
-    font-size: 18px;
-  }
-  
-  .form-container .form-group input {
-    width: 100%;
-    padding: 12px 16px;
-    border-radius: 8px;
-    color: black;
-    font-family: inherit;
-    background-color: transparent;
-    border: 1px solid #414141;
-  }
-  
-  .form-container .form-group textarea {
-    width: 100%;
-    padding: 12px 16px;
-    border-radius: 8px;
-    resize: none;
-    color: black;
-    height: 96px;
-    border: 1px solid #414141;
-    background-color: transparent;
-    font-family: inherit;
-  }
-  
-  .form-container .form-group input::placeholder {
-    opacity: 0.5;
-  }
-  
-  .form-container .form-group input:focus {
-    outline: none;
-    border-color: blue;
-  }
-  
-  .form-container .form-group textarea:focus {
-    outline: none;
-    border-color: blue;
-  }
-  
-  .form-container .form-submit-btn {
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    align-self: center;
-    font-family: inherit;
-    color: white;
-    font-weight: 600;
-    width: 40%;
-    background: #266493;
-    border: 1px solid #414141;
-    padding: 12px 16px;
-    font-size: inherit;
-    gap: 8px;
-    margin-top: 8px;
-    cursor: pointer;
-    border-radius: 6px;
-  }
-  
-  .form-container .form-submit-btn:hover {
-    background-color: #2ee70e;
-    border-color: #2ee70e;
-  }
-  
-  
-  
+}
+
+.form-container button:active {
+  scale: 0.95;
+}
+
+.form-container .form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-container .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.form-container .form-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: white;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.form-container .form-group input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: black;
+  font-family: inherit;
+  background-color: transparent;
+  border: 1px solid white;
+}
+
+.form-container .form-group textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  resize: none;
+  color: black;
+  height: 96px;
+  border: 1px solid white;
+  background-color: transparent;
+  font-family: inherit;
+}
+
+.form-container .form-group input::placeholder {
+  opacity: 0.5;
+}
+
+.form-container .form-group input:focus {
+  outline: none;
+  border-color: blue;
+}
+
+.form-container .form-group textarea:focus {
+  outline: none;
+  border-color: blue;
+}
+
+.form-container .form-submit-btn {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  align-self: center;
+  font-family: inherit;
+  color: #266493;
+  font-weight: 600;
+  width: 40%;
+  background: white;
+  border: 1px solid #414141;
+  padding: 12px 16px;
+  font-size: inherit;
+  gap: 8px;
+  margin-top: 8px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.form-container .form-submit-btn:hover {
+  background-color: #2ee70e;
+  border-color: #2ee70e;
+}
