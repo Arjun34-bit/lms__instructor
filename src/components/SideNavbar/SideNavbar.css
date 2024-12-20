@@ -149,3 +149,35 @@
     display: none;
   }
 }
+.side-navbar {
+  width: 250px;
+  height: 100vh;
+  background-color: #343a40;
+}
+
+.sidebar {
+  padding-top: 20px;
+}
+
+.nav-list {
+  list-style: none;
+  padding: 0;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  color: #fff;
+  padding: 10px;
+  text-decoration: none;
+  transition: background 0.3s ease;
+}
+
+.nav-link:hover {
+  background-color: #495057;
+}
+
+.links_name {
+  margin-left: 10px;
+  font-size: 16px;
+}
