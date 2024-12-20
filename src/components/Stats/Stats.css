@@ -1,0 +1,39 @@
+.stats-container {
+  display: flex;
+  margin-left: 250px;
+  margin-top: 80px;
+  justify-content: space-around;
+}
+
+.stats-box {
+  display: flex;
+  background: linear-gradient(to right, #092941, #266493);
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 20px;
+  width: 250px;
+  margin: 20px;
+  flex-direction: row;
+  justify-content: space-around;
+}
+
+.stats-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.stats-box h2 {
+  font-size: 18px;
+  margin-bottom: 15px;
+  color: white;
+}
+
+.value {
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.icon {
+  margin-right: 5px; /* Adjust margin as needed */
+}

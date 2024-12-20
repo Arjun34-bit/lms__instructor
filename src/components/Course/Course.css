@@ -1,0 +1,253 @@
+.courses-container {
+  max-width: 800px;
+  margin: 50px auto;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+  margin-top: 100px;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.courses-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.courses-table th,
+.courses-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+}
+
+.courses-table th {
+  background-color: #266493;
+  color: white;
+}
+
+.add-course {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.add-course input {
+  width: 70%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+.view-description-btn,
+.remove-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-left: 10px;
+}
+
+.view-description-btn {
+  background-color: rgb(22, 150, 32);
+  color: white;
+}
+.add-btn {
+  background-color: #266493;
+  color: white;
+}
+
+.add-btn:hover {
+  background-color: #1b4e71;
+}
+
+.remove-btn {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.remove-btn:hover {
+  background-color: #c0392b;
+}
+
+/* Add styles for modal overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+/* Styles for modal */
+.modal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 5px;
+  z-index: 1001;
+}
+
+.modal-content {
+  text-align: center;
+}
+
+.close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  cursor: pointer;
+  font-size: 20px;
+  color: #aaa;
+}
+
+.close:hover {
+  color: #333;
+}
+
+.addcourse-btn {
+  position: absolute;
+  bottom: 40px;
+  right: 40px;
+  display: flex;
+  align-items: center;
+  background-color: #266493;
+  border-radius: 20px;
+}
+
+.addcourse-btn box-icon {
+  font-weight: 700;
+}
+
+/*add course form css  */
+.form-container {
+  margin: 0 auto;
+  margin-top: 90px;
+  width: 950px;
+  background: linear-gradient(to right, #092941, #266493);
+  padding: 32px 24px;
+  font-size: 14px;
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
+  border-radius: 25px;
+  background-size: 200% 100%;
+  border: 6px solid transparent;
+  background-clip: padding-box, border-box;
+  background-origin: border-box;
+  /* border-image: 
+      linear-gradient(to right, #092941, #266493); 
+    border-image-slice: 1;  
+    box-shadow: rgba(50, 50, 93, 0.25) 0px 50px 100px -20px, rgba(0, 0, 0, 0.3) 0px 30px 60px -30px, rgba(10, 37, 64, 0.35) 0px -2px 6px 0px inset; */
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.form-container button:active {
+  scale: 0.95;
+}
+
+.form-container .form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-container .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.form-container .form-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: white;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.form-container .form-group input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: black;
+  font-family: inherit;
+  background-color: transparent;
+  border: 1px solid white;
+}
+
+.form-container .form-group textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  resize: none;
+  color: black;
+  height: 96px;
+  border: 1px solid white;
+  background-color: transparent;
+  font-family: inherit;
+}
+
+.form-container .form-group input::placeholder {
+  opacity: 0.5;
+}
+
+.form-container .form-group input:focus {
+  outline: none;
+  border-color: blue;
+}
+
+.form-container .form-group textarea:focus {
+  outline: none;
+  border-color: blue;
+}
+
+.form-container .form-submit-btn {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  align-self: center;
+  font-family: inherit;
+  color: #266493;
+  font-weight: 600;
+  width: 40%;
+  background: white;
+  border: 1px solid #414141;
+  padding: 12px 16px;
+  font-size: inherit;
+  gap: 8px;
+  margin-top: 8px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.form-container .form-submit-btn:hover {
+  background-color: #2ee70e;
+  border-color: #2ee70e;
+}
