@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";  // <-- Add this import
 import Navbar from "../Navbar/Navbar";
 import Modal from "./CourseModal";
 import { Button, Table, Spinner, Alert } from "react-bootstrap"; // Importing Bootstrap components
 import { FaBook, FaUsers, FaFilm, FaChartBar } from "react-icons/fa"; // FontAwesome icons
-import { Link } from "react-router-dom"; // For the links in the side menu
+import { Link } from "react-router-dom";
 
 const Course = () => {
+  const location = useLocation();
+  const alertMessage = location.state?.alert;
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -127,6 +130,7 @@ const Course = () => {
         }}
       > 
         <h2 className="mb-4">Courses</h2>
+        {alertMessage && <Alert variant="success">{alertMessage}</Alert>}
         <Link to="/addcourse" className="btn btn-primary mb-4">Add Course</Link>
 
         {courses.length === 0 ? (
