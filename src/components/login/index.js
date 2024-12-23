@@ -1,17 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
-import axios from "axios"; 
+import axios from "axios";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState(localStorage.getItem("email") || "");
+  const [password, setPassword] = useState(localStorage.getItem("password") || "");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+
+  useEffect(() => {
+    // Check if a valid token exists
+    const token = localStorage.getItem("token");
+    const tokenExpiresAt = localStorage.getItem("tokenExpiresAt");
+
+    if (token && new Date(tokenExpiresAt) > new Date()) {
+      window.location.href = "/dashboard";
+    }
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
     setLoading(true);
 
     try {
@@ -26,11 +36,19 @@ const Login = () => {
         localStorage.setItem("token", token);
         localStorage.setItem("tokenExpiresAt", expiresAt);
 
+        if (rememberMe) {
+          localStorage.setItem("email", email);
+          localStorage.setItem("password", password); // Warning: Avoid storing passwords in plain text!
+        } else {
+          localStorage.removeItem("email");
+          localStorage.removeItem("password");
+        }
+
         setSuccess(message);
         setError("");
 
         setTimeout(() => {
-          window.location.href = "/dashboard"; 
+          window.location.href = "/dashboard";
         }, 2000);
       }
     } catch (error) {
@@ -105,6 +123,8 @@ const Login = () => {
                   type="checkbox"
                   name="remember"
                   id="remember_me"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
                 />
                 <label className="form-check-label text-muted" htmlFor="remember_me">
                   Remember me

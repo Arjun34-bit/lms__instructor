@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { NavLink, Link } from "react-router-dom";
 import "boxicons";
-import { Button } from "react-bootstrap";
-import { FaBook, FaUsers, FaFilm, FaChartBar } from "react-icons/fa"; // FontAwesome icons
-import TidioChat from './TidioChat';
+import { Button, Dropdown } from "react-bootstrap";
+import { FaBook, FaUsers, FaFilm, FaChartBar, FaBell } from "react-icons/fa";
+import TidioChat from "./TidioChat";
+
 function NavbarAndSideMenu() {
   const [isValidToken, setIsValidToken] = useState(false);
   const [userData, setUserData] = useState(null);
@@ -22,7 +23,7 @@ function NavbarAndSideMenu() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -42,12 +43,17 @@ function NavbarAndSideMenu() {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.clear();
+    window.location.href = "/login";
+  };
+
   return (
     <div className="d-flex">
       {/* Navbar */}
-      <nav className="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top w-100">
+      <nav className="navbar navbar-expand-lg navbar-light bg-primary shadow-sm fixed-top w-100">
         <div className="container-fluid">
-          <Link to="/dashboard" className="navbar-brand text-dark">
+          <Link to="/dashboard" className="navbar-brand text-white fw-bold">
             Instructor Dashboard
           </Link>
 
@@ -66,44 +72,47 @@ function NavbarAndSideMenu() {
           <div className="collapse navbar-collapse" id="navbarNav">
             <ul className="navbar-nav ms-auto align-items-center">
               <li className="nav-item">
-                <box-icon
-                  name="bell"
-                  type="solid"
-                  animation="tada"
-                  flip="horizontal"
-                  size="30px"
-                  className="text-dark"
-                ></box-icon>
+                <FaBell className="text-white me-3" size={24} title="Notifications" />
               </li>
 
-              <li className="nav-item ms-3">
-                <Button variant="primary">Live Class</Button>
+              <li className="nav-item">
+                <Button variant="light" className="fw-bold">
+                  Live Class
+                </Button>
               </li>
               <li className="nav-item ms-3">
-              <TidioChat />
+                <TidioChat />
               </li>
 
               {isValidToken && userData ? (
                 <li className="nav-item ms-3">
-                  <Button
-                    variant="outline-dark"
-                    className="d-flex align-items-center"
-                    onClick={() => (window.location.href = `/user-profile/${userData.id}`)}
-                  >
-                    {userData.email}
-                    <box-icon
-                      name="user-circle"
-                      type="solid"
-                      size="24px"
-                      className="ms-2"
-                    ></box-icon>
-                  </Button>
+                  <Dropdown>
+                    <Dropdown.Toggle variant="light" id="user-dropdown">
+                      {userData.email}
+                    </Dropdown.Toggle>
+
+                    <Dropdown.Menu>
+                      <Dropdown.Item
+                        onClick={() => (window.location.href = `/user-profile/${userData.id}`)}
+                      >
+                        Profile
+                      </Dropdown.Item>
+                      <Dropdown.Divider />
+                      <Dropdown.Item
+                        onClick={handleLogout}
+                        className="text-danger"
+                      >
+                        Logout
+                      </Dropdown.Item>
+                    </Dropdown.Menu>
+                  </Dropdown>
                 </li>
               ) : (
                 <li className="nav-item ms-3">
                   <Button
-                    variant="outline-dark"
+                    variant="light"
                     onClick={() => (window.location.href = "/login")}
+                    className="fw-bold"
                   >
                     Login
                   </Button>
@@ -116,47 +125,74 @@ function NavbarAndSideMenu() {
 
       {/* Side Menu */}
       <div
-        className="side-navbar bg-light p-3"
+        className="side-navbar bg-dark text-white p-3"
         style={{
           position: "fixed",
-          top: "60px", // To prevent overlap with navbar
+          top: "60px",
           left: 0,
-          height: "calc(100vh - 60px)", // To fill the remaining height below navbar
+          height: "calc(100vh - 60px)",
           width: "250px",
           zIndex: 1000,
-          paddingTop: "0", // Optional, remove any extra top padding
         }}
       >
         <ul className="nav flex-column">
           <li className="nav-item">
-            <Link to="/course" className="nav-link text-dark">
+            <NavLink
+              to="/dashboard"
+              className="nav-link text-white py-2"
+              activeClassName="bg-primary text-white rounded"
+            >
+              <FaBook size={20} />
+              <span className="ms-2">Dashboard</span>
+            </NavLink>
+          </li>
+          <li className="nav-item">
+            <NavLink
+              to="/course"
+              className="nav-link text-white py-2"
+              activeClassName="bg-primary text-white rounded"
+            >
               <FaBook size={20} />
               <span className="ms-2">Courses</span>
-            </Link>
+            </NavLink>
           </li>
           <li className="nav-item">
-            <span className="nav-link text-dark">
+            <NavLink
+              to="/library"
+              className="nav-link text-white py-2"
+              activeClassName="bg-primary text-white rounded"
+            >
               <FaUsers size={20} />
               <span className="ms-2">Library</span>
-            </span>
+            </NavLink>
           </li>
           <li className="nav-item">
-            <span className="nav-link text-dark">
+            <NavLink
+              to="/reels"
+              className="nav-link text-white py-2"
+              activeClassName="bg-primary text-white rounded"
+            >
               <FaFilm size={20} />
               <span className="ms-2">Reels</span>
-            </span>
+            </NavLink>
           </li>
           <li className="nav-item">
-            <span className="nav-link text-dark">
+            <NavLink
+              to="/results"
+              className="nav-link text-white py-2"
+              activeClassName="bg-primary text-white rounded"
+            >
               <FaChartBar size={20} />
               <span className="ms-2">Results</span>
-            </span>
+            </NavLink>
           </li>
         </ul>
       </div>
 
       {/* Content Area */}
-      
+      <div className="content" style={{ marginLeft: "250px", marginTop: "60px", padding: "20px" }}>
+        {/* Add content here */}
+      </div>
     </div>
   );
 }

@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";  // <-- Add this import
+import { useLocation } from "react-router-dom";
 import Navbar from "../Navbar/Navbar";
-import Modal from "./CourseModal";
-import { Button, Table, Spinner, Alert } from "react-bootstrap"; // Importing Bootstrap components
-import { FaBook, FaUsers, FaFilm, FaChartBar } from "react-icons/fa"; // FontAwesome icons
+import { Button, Table, Spinner, Alert } from "react-bootstrap";
 import { Link } from "react-router-dom";
+import Modal from "./CourseModal";
 
 const Course = () => {
   const location = useLocation();
@@ -14,6 +13,7 @@ const Course = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [customError, setCustomError] = useState(null); // Custom error for specific messages
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -26,38 +26,23 @@ const Course = () => {
       }
 
       try {
-        const decodedToken = JSON.parse(atob(token.split('.')[1])); // Decode the JWT token
-        const userId = decodedToken.id; // Get the userId from the token payload
-        console.log("Decoded User ID from Token:", userId); // Debug: log userId from the token
-
-        const response = await fetch("http://localhost:3001/api/courses", {
+        const response = await fetch("http://localhost:3001/api/courses/instructor", {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         });
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch courses. Please try again.");
-        }
-
         const data = await response.json();
-        console.log("Fetched Data:", data); // Debug: log the fetched data
 
-        // Access the "courses" array from the response
-        const coursesData = data.courses;
-
-        if (!Array.isArray(coursesData)) {
-          throw new Error("Invalid data format received from the server.");
+        if (response.status === 404 && data.message === "No courses found for this instructor") {
+          setCustomError(data.message); // Handle specific error
+        } else if (response.ok) {
+          setCourses(data.courses || []);
+        } else {
+          throw new Error("Unexpected response from server.");
         }
-
-        // Filter courses that belong to the authenticated user based on the userId
-        const userCourses = coursesData.filter((course) => course.instructor_id._id === userId);
-        console.log("Filtered User Courses:", userCourses); // Debug: log filtered user courses
-
-        setCourses(userCourses);
       } catch (error) {
-        console.error("Error fetching courses:", error); // Debug: log error
         setError(error.message);
       } finally {
         setLoading(false);
@@ -108,33 +93,31 @@ const Course = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="alert-container">
-        <Alert variant="danger" className="text-center">
-          {error}
-        </Alert>
-      </div>
-    );
-  }
-
   return (
-  <>
-        <Navbar />
-          <div
+    <>
+      <Navbar />
+      <div
         className="content-area p-4"
         style={{
-          marginLeft: "250px", // Offset for the side navbar
-          marginTop: "30px",  // To offset the navbar
-          flexGrow: 1,        // Ensure content fills remaining space
+          marginLeft: "250px",
+          marginTop: "30px",
+          flexGrow: 1,
         }}
-      > 
+      >
         <h2 className="mb-4">Courses</h2>
         {alertMessage && <Alert variant="success">{alertMessage}</Alert>}
-        <Link to="/addcourse" className="btn btn-primary mb-4">Add Course</Link>
+        {error && <Alert variant="danger" className="text-center">{error}</Alert>}
+        {customError && (
+          <Alert variant="warning" className="text-center">
+            {customError}
+          </Alert>
+        )}
+        <Link to="/addcourse" className="btn btn-primary mb-4">
+          Add Course
+        </Link>
 
-        {courses.length === 0 ? (
-          <div className="alert alert-warning text-center">No courses found.</div>
+        {courses.length === 0 && !customError ? (
+          <div className="alert alert-warning text-center">No courses available.</div>
         ) : (
           <Table striped bordered hover responsive>
             <thead>
@@ -149,7 +132,7 @@ const Course = () => {
               {courses.map((course) => {
                 const thumbnailUrl = course.thumbnail
                   ? `${course.thumbnail}`
-                  : "https://via.placeholder.com/150"; // Fallback in case there's no thumbnail
+                  : "https://via.placeholder.com/150";
 
                 return (
                   <tr key={course._id}>
@@ -187,7 +170,7 @@ const Course = () => {
           />
         )}
       </div>
-      </>
+    </>
   );
 };
 

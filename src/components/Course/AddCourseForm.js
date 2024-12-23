@@ -1,278 +1,367 @@
 import React, { useState, useEffect } from "react";
-import { Form, Button, Row, Col, Container } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
-import { FaBook, FaUsers, FaFilm, FaChartBar } from "react-icons/fa";
-import NavbarAndSideMenu from "../Navbar/Navbar";
+import { Form, Button, Alert, Row, Col } from "react-bootstrap";
+import PropTypes from "prop-types";
 
-const CourseForm = ({ onSubmit = () => {}, initialData = {} }) => {
-  const [alertMessage, setAlertMessage] = useState("");
-  const navigate = useNavigate(); // Move this to the top-level of the component
+const CourseForm = ({ userId, onSubmit, errors, success, error }) => {
+  // PropTypes validation
+  CourseForm.propTypes = {
+    userId: PropTypes.string.isRequired,
+    onSubmit: PropTypes.func.isRequired,
+    errors: PropTypes.array,
+    success: PropTypes.string,
+    error: PropTypes.string,
+  };
 
+  // States
   const [formData, setFormData] = useState({
-    title: initialData.title || "",
-    description: initialData.description || "",
-    instructor_id: initialData.instructor_id || "",
-    category: initialData.category || "live",
-    type: initialData.type || "",
-    level: initialData.level || "beginner",
-    duration: initialData.duration || "",
-    price: initialData.price || 0,
-    status: initialData.status || "draft",
-    thumbnail: initialData.thumbnail || null, // Handle file object
-    metadata: {
-      rating: initialData.metadata?.rating || 0,
-      enrolled: initialData.metadata?.enrolled || 0,
-      language: initialData.metadata?.language || "English",
-    },
-    bestseller: initialData.bestseller || false,
+    title: "",
+    level: "",
+    description: "",
+    category_id: "",
+    live_days: [],
+    live_time: "",
+    start_date: "",
+    end_date: "",
+    department_id: "",
+    subject_id: "",
+    language: "",
+    duration: "",
+    is_free: false,
+    price: "",
+    thumbnail: null,
   });
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      try {
-        const parsedToken = JSON.parse(atob(token.split(".")[1]));
-        const instructorId = parsedToken.id;
-        setFormData((prev) => ({ ...prev, instructor_id: instructorId }));
-      } catch (err) {
-        console.error("Error decoding token:", err);
-      }
-    }
-  }, []);
+  const [userDetails, setUserDetails] = useState(null);
+  const [filteredSubjects, setFilteredSubjects] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [languages, setLanguages] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorState, setErrorState] = useState("");
 
+  // Fetch user details, languages, and categories on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      const token = localStorage.getItem("token");
+      try {
+        const [userResponse, languageResponse, categoryResponse] = await Promise.all([
+          fetch(`http://localhost:3001/api/auth/users/${userId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch("http://localhost:3001/api/languages"),
+          fetch("http://localhost:3001/api/category"),
+        ]);
+
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          setUserDetails(userData.user);
+        } else {
+          throw new Error("Failed to fetch user details.");
+        }
+
+        const languagesData = await languageResponse.json();
+        const categoriesData = await categoryResponse.json();
+        setLanguages(languagesData);
+        setCategories(categoriesData);
+      } catch (err) {
+        setErrorState(err.message || "An error occurred while fetching data.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [userId]);
+
+  // Filter subjects based on selected department
+  useEffect(() => {
+    if (formData.department_id && userDetails?.subjects) {
+      setFilteredSubjects(
+        userDetails.subjects.filter(
+          (subject) => subject.department.id === formData.department_id
+        )
+      );
+    } else {
+      setFilteredSubjects([]);
+    }
+  }, [formData.department_id, userDetails]);
+
+  // Handle form input changes
   const handleChange = (e) => {
-    const { name, value, type, checked, files } = e.target;
-    if (name.startsWith("metadata.")) {
-      const key = name.split(".")[1];
+    const { name, value, type, checked } = e.target;
+
+    if (type === "checkbox" && name === "live_days") {
       setFormData((prev) => ({
         ...prev,
-        metadata: {
-          ...prev.metadata,
-          [key]: type === "number" ? parseFloat(value) : value,
-        },
+        live_days: checked
+          ? [...prev.live_days, value]
+          : prev.live_days.filter((day) => day !== value),
+      }));
+    } else if (type === "checkbox") {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: checked,
       }));
     } else if (type === "file") {
       setFormData((prev) => ({
         ...prev,
-        [name]: files[0],
+        thumbnail: e.target.files[0],
       }));
     } else {
       setFormData((prev) => ({
         ...prev,
-        [name]: type === "checkbox" ? checked : value,
+        [name]: value,
       }));
     }
   };
 
-  const handleSubmit = async (e) => {
+  // Handle form submission
+  const handleSubmit = (e) => {
     e.preventDefault();
     const token = localStorage.getItem("token");
-
-    const formPayload = new FormData();
-    formPayload.append("instructor_id", formData.instructor_id);
-
-    for (let key in formData) {
-      if (key === "metadata") {
-        for (let subKey in formData[key]) {
-          formPayload.append(`metadata.${subKey}`, formData[key][subKey]);
-        }
-      } else if (key !== "instructor_id") {
-        formPayload.append(key, formData[key]);
-      }
-    }
-
-    const response = await fetch("http://localhost:3001/api/courses", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: formPayload,
-    });
-
-    const result = await response.json();
-
-    if (response.ok) {
-      setAlertMessage("Course created successfully!");
-      onSubmit(result);
-      navigate("/course", { state: { alert: "Course created successfully!" } });
-    } else {
-      alert(`Error: ${result.message}`);
-    }
+    onSubmit({ ...formData, userId, token });
   };
 
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (errorState) {
+    return <Alert variant="danger">{errorState}</Alert>;
+  }
+
   return (
-    <div className="d-flex">
-      {/* Sidebar */}
-      <div
-        className="side-navbar bg-light p-3"
-        style={{
-          position: "fixed",
-          top: "200px",
-          left: 0,
-          height: "calc(100vh - 200px)",
-          width: "250px",
-          marginTop: "200px",
-          marginBottom: "700px",
-          zIndex: 1000,
-        }}
-      >
-       <NavbarAndSideMenu />
-      </div>
+    <div className="content-wrapper p-4">
+      <h1 className="mb-4">Create New Course</h1>
 
-      {/* Content Area */}
-      <Container fluid className="p-4" style={{ marginLeft: "250px", paddingTop: "480px" }}>
-        <div className="bg-light p-4 rounded shadow-sm">
-          <h4 className="mb-4">Create a New Course</h4>
-          <Form onSubmit={handleSubmit}>
-            {/* Title and Category */}
-            <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Title</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="title"
-                    value={formData.title}
-                    onChange={handleChange}
-                    placeholder="Enter course title"
-                    required
-                  />
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Category</Form.Label>
-                  <Form.Check
-                    inline
-                    label="Live"
-                    type="radio"
-                    name="category"
-                    value="live"
-                    checked={formData.category === "live"}
-                    onChange={handleChange}
-                  />
-                  <Form.Check
-                    inline
-                    label="Featured"
-                    type="radio"
-                    name="category"
-                    value="featured"
-                    checked={formData.category === "featured"}
-                    onChange={handleChange}
-                  />
-                  <Form.Check
-                    inline
-                    label="Top Courses"
-                    type="radio"
-                    name="category"
-                    value="top"
-                    checked={formData.category === "top"}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
+      {error && <Alert variant="danger">{error}</Alert>}
+      {success && <Alert variant="success">{success}</Alert>}
+      {errors?.length > 0 && (
+        <Alert variant="danger">
+          <ul>
+            {errors.map((err, idx) => (
+              <li key={idx}>{err}</li>
+            ))}
+          </ul>
+        </Alert>
+      )}
 
-            {/* Description and Type */}
-            <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Description</Form.Label>
-                  <Form.Control
-                    as="textarea"
-                    rows={3}
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    placeholder="Enter course description"
-                    required
-                  />
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Type</Form.Label>
-                  <Form.Select
-                    name="type"
-                    value={formData.type}
-                    onChange={handleChange}
-                    required
-                  >
-                    <option value="">Select Type</option>
-                    <option value="programming">Programming</option>
-                    <option value="design">Design</option>
-                    <option value="business">Business</option>
-                  </Form.Select>
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Level</Form.Label>
-                  <Form.Select
-                    name="level"
-                    value={formData.level}
-                    onChange={handleChange}
-                  >
-                    <option value="beginner">Beginner</option>
-                    <option value="intermediate">Intermediate</option>
-                    <option value="advanced">Advanced</option>
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-            </Row>
+      <Form onSubmit={handleSubmit}>
+        <Row className="mb-3">
+          <Col md={6}>
+            <Form.Group controlId="title">
+              <Form.Label>Course Title</Form.Label>
+              <Form.Control
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                required
+              />
+            </Form.Group>
+          </Col>
 
-            {/* Price and Duration */}
-            <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Price</Form.Label>
-                  <Form.Control
-                    type="number"
-                    name="price"
-                    value={formData.price}
-                    onChange={handleChange}
-                    min="0"
-                    placeholder="Enter course price"
-                  />
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Duration</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="duration"
-                    value={formData.duration}
-                    onChange={handleChange}
-                    placeholder="Enter course duration (e.g., 10 hours)"
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
+          <Col md={6}>
+            <Form.Group controlId="level">
+              <Form.Label>Level</Form.Label>
+              <Form.Select
+                name="level"
+                value={formData.level}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select Level</option>
+                <option value="beginner">Beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="advanced">Advanced</option>
+              </Form.Select>
+            </Form.Group>
+          </Col>
+        </Row>
 
-            {/* Thumbnail and Status */}
-            <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Thumbnail Image</Form.Label>
-                  <Form.Control
-                    type="file"
-                    name="thumbnail"
-                    onChange={handleChange}
-                    accept="image/*"
-                  />
-                </Form.Group>
-              </Col>
-              
-            </Row>
+        <Form.Group className="mb-3" controlId="description">
+          <Form.Label>Course Description</Form.Label>
+          <Form.Control
+            as="textarea"
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            required
+          />
+        </Form.Group>
 
-           
+        <Form.Group className="mb-3" controlId="category_id">
+          <Form.Label>Category</Form.Label>
+          {categories.map((category) => (
+            <Form.Check
+              key={category._id}
+              type="radio"
+              name="category_id"
+              value={category._id}
+              label={category.name}
+              checked={formData.category_id === category._id}
+              onChange={handleChange}
+            />
+          ))}
+        </Form.Group>
 
-            <Button type="submit" variant="primary" className="mt-3">
-              Submit
-            </Button>
-          </Form>
-        </div>
-      </Container>
+        {formData.category_id === "live" && (
+          <>
+            <Form.Group className="mb-3" controlId="live_days">
+              <Form.Label>Live Class Days</Form.Label>
+              {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day) => (
+                <Form.Check
+                  key={day}
+                  type="checkbox"
+                  name="live_days"
+                  value={day.toLowerCase()}
+                  label={day}
+                  onChange={handleChange}
+                />
+              ))}
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="live_time">
+              <Form.Label>Live Class Time</Form.Label>
+              <Form.Control
+                type="text"
+                name="live_time"
+                value={formData.live_time}
+                onChange={handleChange}
+                required
+              />
+            </Form.Group>
+          </>
+        )}
+
+        <Row className="mb-3">
+          <Col md={6}>
+            <Form.Group controlId="start_date">
+              <Form.Label>Start Date</Form.Label>
+              <Form.Control
+                type="date"
+                name="start_date"
+                value={formData.start_date}
+                onChange={handleChange}
+                required
+              />
+            </Form.Group>
+          </Col>
+
+          <Col md={6}>
+            <Form.Group controlId="end_date">
+              <Form.Label>End Date</Form.Label>
+              <Form.Control
+                type="date"
+                name="end_date"
+                value={formData.end_date}
+                onChange={handleChange}
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+
+        <Row className="mb-3">
+          <Col md={6}>
+          
+          <Form.Group controlId="department_id">
+        <Form.Label>Department</Form.Label>
+        <Form.Control
+          as="select"
+          name="department_id"
+          value={formData.department_id}
+          onChange={handleChange}
+        >
+          <option value="">Select Department</option>
+          {userDetails?.departments.map((department) => (
+            <option key={department.id} value={department.id}>
+              {department.name}
+            </option>
+          ))}
+        </Form.Control>
+      </Form.Group>
+
+      
+          </Col>
+
+          <Col md={6}>
+          <Form.Group controlId="subject_id">
+        <Form.Label>Subject</Form.Label>
+        <Form.Control
+          as="select"
+          name="subject_id"
+          value={formData.subject_id}
+          onChange={handleChange}
+        >
+          <option value="">Select Subject</option>
+          {filteredSubjects.map((subject) => (
+            <option key={subject.id} value={subject.id}>
+              {subject.name}
+            </option>
+          ))}
+        </Form.Control>
+      </Form.Group>
+          </Col>
+        </Row>
+
+        <Form.Group controlId="language">
+          <Form.Label>Language</Form.Label>
+          <Form.Control
+            as="select"
+            name="language"
+            value={formData.language}
+            onChange={handleChange}
+          >
+            <option value="">Select language</option>
+            {languages.map((language) => (
+              <option key={language._id} value={language._id}>
+                {language.name} ({language.native_name})
+              </option>
+            ))}
+          </Form.Control>
+        </Form.Group>
+
+        <Form.Group className="mb-3" controlId="duration">
+          <Form.Label>Duration</Form.Label>
+          <Form.Control
+            type="text"
+            name="duration"
+            value={formData.duration}
+            onChange={handleChange}
+          />
+        </Form.Group>
+
+        <Form.Group className="mb-3" controlId="is_free">
+          <Form.Check
+            type="checkbox"
+            name="is_free"
+            label="Is this course free?"
+            checked={formData.is_free}
+            onChange={handleChange}
+          />
+        </Form.Group>
+
+        {!formData.is_free && (
+          <Form.Group className="mb-3" controlId="price">
+            <Form.Label>Price</Form.Label>
+            <Form.Control
+              type="number"
+              name="price"
+              value={formData.price}
+              onChange={handleChange}
+              required={!formData.is_free}
+            />
+          </Form.Group>
+        )}
+
+        <Form.Group className="mb-3" controlId="thumbnail">
+          <Form.Label>Thumbnail</Form.Label>
+          <Form.Control type="file" name="thumbnail" onChange={handleChange} />
+        </Form.Group>
+
+        <Button type="submit" variant="primary">
+          Create Course
+        </Button>
+      </Form>
     </div>
   );
 };

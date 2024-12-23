@@ -7,6 +7,7 @@ import { Routes, Route } from "react-router-dom";
 import AddCourseForm from "./components/Course/AddCourseForm";
 import Notes from "./components/Notes/Notes";
 import Navbar from "./components/Navbar/Navbar";
+import UserProfile from "./components/Navbar/profile";
 import Login from "./components/login/index";
 import CreateLiveClass from "./components/liveclass/CreateLiveClass";
 import LiveClass from "./components/liveclass/index";
@@ -31,6 +32,16 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/user-profile/:userId"
+          element={
+            <ProtectedRoute>
+              <UserProfile />
+            </ProtectedRoute>
+          }
+        />
+        
+
         <Route
           path="/course"
           element={
