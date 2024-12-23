@@ -2,6 +2,7 @@ import React from "react";
 import "./App.css";
 import Homepage from "./components/Homepage/Homepage";
 import Course from "./components/Course/Course";
+import Register from "./components/register/index";
 import { Routes, Route } from "react-router-dom";
 import AddCourseForm from "./components/Course/AddCourseForm";
 import Notes from "./components/Notes/Notes";
@@ -10,7 +11,8 @@ import Login from "./components/login/index";
 import CreateLiveClass from "./components/liveclass/CreateLiveClass";
 import LiveClass from "./components/liveclass/index";
 import ProtectedRoute from "./components/ProtectedRoute"; // Import the new component
-
+const apiUrl = process.env.REACT_APP_API_URL;
+console.log("API URL from .env:", apiUrl);
 function App() {
   return (
     <>
@@ -18,6 +20,8 @@ function App() {
       <Routes>
         <Route path="/create-live-class" element={<CreateLiveClass />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+
         <Route path="/" element={<Login />} />
         <Route
           path="/dashboard"

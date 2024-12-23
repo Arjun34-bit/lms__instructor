@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import "boxicons";
 import { Button } from "react-bootstrap";
 import { FaBook, FaUsers, FaFilm, FaChartBar } from "react-icons/fa"; // FontAwesome icons
-
+import TidioChat from './TidioChat';
 function NavbarAndSideMenu() {
   const [isValidToken, setIsValidToken] = useState(false);
   const [userData, setUserData] = useState(null);
@@ -78,6 +78,9 @@ function NavbarAndSideMenu() {
 
               <li className="nav-item ms-3">
                 <Button variant="primary">Live Class</Button>
+              </li>
+              <li className="nav-item ms-3">
+              <TidioChat />
               </li>
 
               {isValidToken && userData ? (
