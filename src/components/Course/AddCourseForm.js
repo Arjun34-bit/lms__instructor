@@ -114,11 +114,42 @@ const CourseForm = ({ userId, onSubmit, errors, success, error }) => {
     }
   };
 
-  // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const token = localStorage.getItem("token");
-    onSubmit({ ...formData, userId, token });
+    
+    // Prepare form data to be sent in the request
+    const formDataToSend = new FormData();
+  
+    for (const key in formData) {
+      if (formData.hasOwnProperty(key)) {
+        formDataToSend.append(key, formData[key]);
+      }
+    }
+  
+    formDataToSend.append("userId", userId);
+    formDataToSend.append("token", token);
+  
+    try {
+      // Make the POST request to your backend
+      const response = await fetch("http://localhost:3001/api/courses/store", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+        body: formDataToSend,
+      });
+  
+      if (response.ok) {
+        const data = await response.json();
+        onSubmit(data); // Call the onSubmit callback with the response data
+      } else {
+        const errorData = await response.json();
+        setErrorState(errorData.message || "Failed to create course.");
+      }
+    } catch (err) {
+      setErrorState(err.message || "An error occurred while submitting the form.");
+    }
   };
 
   if (isLoading) {
@@ -262,44 +293,41 @@ const CourseForm = ({ userId, onSubmit, errors, success, error }) => {
 
         <Row className="mb-3">
           <Col md={6}>
-          
-          <Form.Group controlId="department_id">
-        <Form.Label>Department</Form.Label>
-        <Form.Control
-          as="select"
-          name="department_id"
-          value={formData.department_id}
-          onChange={handleChange}
-        >
-          <option value="">Select Department</option>
-          {userDetails?.departments.map((department) => (
-            <option key={department.id} value={department.id}>
-              {department.name}
-            </option>
-          ))}
-        </Form.Control>
-      </Form.Group>
-
-      
+            <Form.Group controlId="department_id">
+              <Form.Label>Department</Form.Label>
+              <Form.Control
+                as="select"
+                name="department_id"
+                value={formData.department_id}
+                onChange={handleChange}
+              >
+                <option value="">Select Department</option>
+                {userDetails?.departments.map((department) => (
+                  <option key={department.id} value={department.id}>
+                    {department.name}
+                  </option>
+                ))}
+              </Form.Control>
+            </Form.Group>
           </Col>
 
           <Col md={6}>
-          <Form.Group controlId="subject_id">
-        <Form.Label>Subject</Form.Label>
-        <Form.Control
-          as="select"
-          name="subject_id"
-          value={formData.subject_id}
-          onChange={handleChange}
-        >
-          <option value="">Select Subject</option>
-          {filteredSubjects.map((subject) => (
-            <option key={subject.id} value={subject.id}>
-              {subject.name}
-            </option>
-          ))}
-        </Form.Control>
-      </Form.Group>
+            <Form.Group controlId="subject_id">
+              <Form.Label>Subject</Form.Label>
+              <Form.Control
+                as="select"
+                name="subject_id"
+                value={formData.subject_id}
+                onChange={handleChange}
+              >
+                <option value="">Select Subject</option>
+                {filteredSubjects.map((subject) => (
+                  <option key={subject.id} value={subject.id}>
+                    {subject.name}
+                  </option>
+                ))}
+              </Form.Control>
+            </Form.Group>
           </Col>
         </Row>
 
