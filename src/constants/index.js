@@ -1,6 +1,6 @@
 export const envConstant = {
     SKIP_PREFLIGHT_CHECK: process.env.SKIP_PREFLIGHT_CHECK || true,
-    REACT_APP_API_URL: process.env.REACT_APP_API_URL || "http://localhost:3001/api",
+    BACKEND_BASE_URL: process.env.REACT_APP_BACKEND_BASE_URL || "http://localhost:3001/api",
     AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID || "",
     AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY || "",
     AWS_DEFAULT_REGION: process.env.AWS_DEFAULT_REGION || "us-east-1",

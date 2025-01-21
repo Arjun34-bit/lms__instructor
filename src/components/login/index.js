@@ -27,7 +27,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${envConstant.REACT_APP_API_URL}/api/auth/login`, {
+      const response = await axios.post(`${envConstant.BACKEND_BASE_URL}/auth/login`, {
         email,
         password,
       });

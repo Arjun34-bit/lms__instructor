@@ -10,6 +10,14 @@ export const getLocalStorageUser = () => {
     return null;
 }
 
+export const setAccessToken = (token) => {
+    localStorage.setItem("token", token);
+}
+
+export const getAccessToken = () => {
+    return localStorage.getItem("token");
+}
+
 export const getUserRole = () => {
     const user = getLocalStorageUser();
     if(!user || !user?.role) {

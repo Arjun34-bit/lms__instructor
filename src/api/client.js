@@ -1,11 +1,6 @@
 import axios from "axios";
-import {
-  getAdminAccessToken,
-  getUserAccessToken,
-  removeAdminAccessToken,
-  removeUserAccessToken,
-} from "../utils/localStorageUtils";
 import { envConstant } from "../constants";
+import { getAccessToken } from "../utils/localStorageUtils";
 
 const axiosClient = axios.create({
   baseURL: envConstant.BACKEND_BASE_URL,
@@ -14,9 +9,7 @@ const axiosClient = axios.create({
 
 axiosClient.interceptors.request.use(
   (config) => {
-    // Determine the appropriate token based on the route
-    const isAdminRoute = config.url?.startsWith("/api/admin");
-    const token = isAdminRoute ? getAdminAccessToken() : getUserAccessToken();
+    const token = getAccessToken();
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -31,15 +24,10 @@ axiosClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      const isAdminRoute = config.url?.startsWith("/api/admin");
-      if (isAdminRoute) {
-        removeAdminAccessToken();
-      } else {
-        removeUserAccessToken();
-      }
+      localStorage.clear();
 
-      // Redirect to the sign-in page
-      window.location.href = "/sign-in";
+      // Redirect to the login page
+      window.location.href = "/login";
     } else {
       console.error("API Error:", error.response || error.message);
     }
