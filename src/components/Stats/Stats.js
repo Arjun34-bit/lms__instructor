@@ -16,7 +16,7 @@ const Stats = () => {
       </div>
       <div className="stats-box">
         <div className="stats-details">
-          <h2>Total Views</h2>
+          <h2>Total Likes</h2>
           <div className="value">100k</div>
         </div>
         <FaThumbsUp style={{ marginRight: "13px", color: "white" , fontSize:"42px" }} />

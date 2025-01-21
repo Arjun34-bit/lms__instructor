@@ -81,7 +81,7 @@ function NavbarAndSideMenu() {
                 </Button>
               </li>
               <li className="nav-item ms-3">
-                <TidioChat />
+                {/* <TidioChat /> */}
               </li>
 
               {isValidToken && userData ? (
@@ -128,9 +128,9 @@ function NavbarAndSideMenu() {
         className="side-navbar bg-dark text-white p-3"
         style={{
           position: "fixed",
-          top: "60px",
+          top: "55px",
           left: 0,
-          height: "calc(100vh - 60px)",
+          height: "100%",
           width: "250px",
           zIndex: 1000,
         }}
@@ -193,6 +193,7 @@ function NavbarAndSideMenu() {
       <div className="content" style={{ marginLeft: "250px", marginTop: "60px", padding: "20px" }}>
         {/* Add content here */}
       </div>
+      <TidioChat />
     </div>
   );
 }

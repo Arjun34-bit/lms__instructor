@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
+import NavbarAndSideMenu from "./Navbar/Navbar";
 
 const ProtectedRoute = ({ children }) => {
   const [isValid, setIsValid] = useState(false);
   const [loading, setLoading] = useState(true); // To handle the async loading state
   const [error, setError] = useState(null);
-  const [userId, setUserId] = useState(null); // Store the user ID
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -31,7 +31,6 @@ const ProtectedRoute = ({ children }) => {
 
       if (data.valid && data.user.role === "instructor") {
         setIsValid(true);
-        setUserId(data.user.id); // Store the user ID
       } else {
         setError("Invalid credentials or insufficient permissions.");
         localStorage.removeItem("token"); // Remove invalid token
@@ -57,7 +56,12 @@ const ProtectedRoute = ({ children }) => {
   }
 
   // If token is valid and user is instructor, render the protected route
-  return React.cloneElement(children, { userId }); // Pass userId as a prop to the child component
+  return (
+    <>
+      <NavbarAndSideMenu />
+      <Outlet />
+    </>
+  ); // Pass userId as a prop to the child component
 };
 
 export default ProtectedRoute;

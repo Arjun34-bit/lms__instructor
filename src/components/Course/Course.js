@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import Navbar from "../Navbar/Navbar";
 import { Button, Table, Spinner, Alert } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import Modal from "./CourseModal";
@@ -95,7 +94,6 @@ const Course = () => {
 
   return (
     <>
-      <Navbar />
       <div
         className="content-area p-4"
         style={{

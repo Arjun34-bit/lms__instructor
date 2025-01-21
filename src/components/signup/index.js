@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import axios from "axios";
-import { envConstant } from "../../constants";
-import { setLocalStorageUser } from "../../utils/localStorageUtils";
 
-const Login = () => {
+const SignUp = () => {
   const [email, setEmail] = useState(localStorage.getItem("email") || "");
   const [password, setPassword] = useState(localStorage.getItem("password") || "");
   const [error, setError] = useState("");
@@ -27,15 +25,14 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${envConstant.REACT_APP_API_URL}/api/auth/login`, {
+      const response = await axios.post("http://localhost:3001/api/auth/login", {
         email,
         password,
       });
 
-      const { message, token, user, expiresAt } = response.data;
+      const { message, token, expiresAt } = response.data;
 
       if (token) {
-        setLocalStorageUser(user);
         localStorage.setItem("token", token);
         localStorage.setItem("tokenExpiresAt", expiresAt);
 
@@ -154,4 +151,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default SignUp;
