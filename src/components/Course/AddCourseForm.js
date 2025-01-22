@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Form, Button, Alert, Row, Col } from "react-bootstrap";
 import PropTypes from "prop-types";
+import { getUserId } from "../../utils/localStorageUtils";
+import { envConstant } from "../../constants";
 
 const CourseForm = ({ userId, onSubmit, errors, success, error }) => {
   // PropTypes validation
@@ -44,11 +46,11 @@ const CourseForm = ({ userId, onSubmit, errors, success, error }) => {
       const token = localStorage.getItem("token");
       try {
         const [userResponse, languageResponse, categoryResponse] = await Promise.all([
-          fetch(`http://localhost:3001/api/auth/users/${userId}`, {
+          fetch(`${envConstant.BACKEND_BASE_URL}/auth/users/${getUserId()}`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch("http://localhost:3001/api/languages"),
-          fetch("http://localhost:3001/api/category"),
+          fetch(`${envConstant.BACKEND_BASE_URL}/languages`),
+          fetch(`${envConstant.BACKEND_BASE_URL}/category`),
         ]);
 
         if (userResponse.ok) {
@@ -132,7 +134,7 @@ const CourseForm = ({ userId, onSubmit, errors, success, error }) => {
   
     try {
       // Make the POST request to your backend
-      const response = await fetch("http://localhost:3001/api/courses/store", {
+      const response = await fetch(`${envConstant.BACKEND_BASE_URL}/api/courses/store`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -169,7 +171,7 @@ const CourseForm = ({ userId, onSubmit, errors, success, error }) => {
       {errors?.length > 0 && (
         <Alert variant="danger">
           <ul>
-            {errors.map((err, idx) => (
+            {errors?.map((err, idx) => (
               <li key={idx}>{err}</li>
             ))}
           </ul>
@@ -222,24 +224,24 @@ const CourseForm = ({ userId, onSubmit, errors, success, error }) => {
 
         <Form.Group className="mb-3" controlId="category_id">
           <Form.Label>Category</Form.Label>
-          {categories.map((category) => (
+          {categories?.map((category) => (
             <Form.Check
-              key={category._id}
+              key={category?._id}
               type="radio"
               name="category_id"
-              value={category._id}
-              label={category.name}
-              checked={formData.category_id === category._id}
+              value={category?._id}
+              label={category?.name}
+              checked={formData?.category_id === category?._id}
               onChange={handleChange}
             />
           ))}
         </Form.Group>
 
-        {formData.category_id === "live" && (
+        {formData?.category_id === "live" && (
           <>
             <Form.Group className="mb-3" controlId="live_days">
               <Form.Label>Live Class Days</Form.Label>
-              {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day) => (
+              {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]?.map((day) => (
                 <Form.Check
                   key={day}
                   type="checkbox"
@@ -302,9 +304,9 @@ const CourseForm = ({ userId, onSubmit, errors, success, error }) => {
                 onChange={handleChange}
               >
                 <option value="">Select Department</option>
-                {userDetails?.departments.map((department) => (
-                  <option key={department.id} value={department.id}>
-                    {department.name}
+                {userDetails?.departments?.map((department) => (
+                  <option key={department?.id} value={department?.id}>
+                    {department?.name}
                   </option>
                 ))}
               </Form.Control>
@@ -317,13 +319,13 @@ const CourseForm = ({ userId, onSubmit, errors, success, error }) => {
               <Form.Control
                 as="select"
                 name="subject_id"
-                value={formData.subject_id}
+                value={formData?.subject_id}
                 onChange={handleChange}
               >
                 <option value="">Select Subject</option>
-                {filteredSubjects.map((subject) => (
-                  <option key={subject.id} value={subject.id}>
-                    {subject.name}
+                {filteredSubjects?.map((subject) => (
+                  <option key={subject?.id} value={subject?.id}>
+                    {subject?.name}
                   </option>
                 ))}
               </Form.Control>
@@ -340,9 +342,9 @@ const CourseForm = ({ userId, onSubmit, errors, success, error }) => {
             onChange={handleChange}
           >
             <option value="">Select language</option>
-            {languages.map((language) => (
-              <option key={language._id} value={language._id}>
-                {language.name} ({language.native_name})
+            {languages?.map((language) => (
+              <option key={language?._id} value={language?._id}>
+                {language?.name} ({language?.native_name})
               </option>
             ))}
           </Form.Control>
@@ -363,12 +365,12 @@ const CourseForm = ({ userId, onSubmit, errors, success, error }) => {
             type="checkbox"
             name="is_free"
             label="Is this course free?"
-            checked={formData.is_free}
+            checked={formData?.is_free}
             onChange={handleChange}
           />
         </Form.Group>
 
-        {!formData.is_free && (
+        {!formData?.is_free && (
           <Form.Group className="mb-3" controlId="price">
             <Form.Label>Price</Form.Label>
             <Form.Control

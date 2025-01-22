@@ -14,7 +14,7 @@ const CourseModal = ({ course, closeModal }) => {
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title" id="courseModalLabel">
-              {course.title}
+              {course?.title}
             </h5>
             <button
               type="button"
@@ -25,15 +25,15 @@ const CourseModal = ({ course, closeModal }) => {
             ></button>
           </div>
           <div className="modal-body">
-            <h6>Instructor: {course.instructor_name}</h6>
-            <p><strong>Email:</strong> {course.instructor_email}</p>
-            <p><strong>Category:</strong> {course.category}</p>
-            <p><strong>Level:</strong> {course.level}</p>
-            <p><strong>Duration:</strong> {course.duration} minutes</p>
-            <p><strong>Price:</strong> ${course.price}</p>
-            <p><strong>Status:</strong> {course.status}</p>
+            <h6>Instructor: {course?.instructor_name}</h6>
+            <p><strong>Email:</strong> {course?.instructor_email}</p>
+            <p><strong>Category:</strong> {course?.category}</p>
+            <p><strong>Level:</strong> {course?.level}</p>
+            <p><strong>Duration:</strong> {course?.duration} minutes</p>
+            <p><strong>Price:</strong> ${course?.price}</p>
+            <p><strong>Status:</strong> {course?.status}</p>
             <p><strong>Description:</strong></p>
-            <p>{course.description}</p>
+            <p>{course?.description}</p>
           </div>
           <div className="modal-footer">
             <button

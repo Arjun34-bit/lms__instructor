@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { NavLink, Link } from "react-router-dom";
-import "boxicons";
 import { Button, Dropdown } from "react-bootstrap";
 import { FaBook, FaUsers, FaFilm, FaChartBar, FaBell } from "react-icons/fa";
 import TidioChat from "./TidioChat";
@@ -19,13 +18,16 @@ function NavbarAndSideMenu() {
 
   const validateToken = async (token) => {
     try {
-      const response = await fetch("http://localhost:3001/api/auth/validate-token", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        "http://localhost:3001/api/auth/validate-token",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       const data = await response.json();
 
@@ -72,17 +74,21 @@ function NavbarAndSideMenu() {
           <div className="collapse navbar-collapse" id="navbarNav">
             <ul className="navbar-nav ms-auto align-items-center">
               <li className="nav-item">
-                <FaBell className="text-white me-3" size={24} title="Notifications" />
+                <FaBell
+                  className="text-white me-3"
+                  size={24}
+                  title="Notifications"
+                />
               </li>
 
               <li className="nav-item">
-                <Button variant="light" className="fw-bold">
-                  Live Class
-                </Button>
+                <Link to={"/liveclasses"}>
+                  <Button variant="light" className="fw-bold">
+                    Live Class
+                  </Button>
+                </Link>
               </li>
-              <li className="nav-item ms-3">
-                {/* <TidioChat /> */}
-              </li>
+              <li className="nav-item ms-3">{/* <TidioChat /> */}</li>
 
               {isValidToken && userData ? (
                 <li className="nav-item ms-3">
@@ -93,7 +99,9 @@ function NavbarAndSideMenu() {
 
                     <Dropdown.Menu>
                       <Dropdown.Item
-                        onClick={() => (window.location.href = `/user-profile/${userData.id}`)}
+                        onClick={() =>
+                          (window.location.href = `/user-profile/${userData.id}`)
+                        }
                       >
                         Profile
                       </Dropdown.Item>
@@ -190,7 +198,10 @@ function NavbarAndSideMenu() {
       </div>
 
       {/* Content Area */}
-      <div className="content" style={{ marginLeft: "250px", marginTop: "60px", padding: "20px" }}>
+      <div
+        className="content"
+        style={{ marginLeft: "250px", marginTop: "60px", padding: "20px" }}
+      >
         {/* Add content here */}
       </div>
       <TidioChat />

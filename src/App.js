@@ -8,12 +8,12 @@ import AddCourseForm from "./components/Course/AddCourseForm";
 import Notes from "./components/Notes/Notes";
 import UserProfile from "./components/Navbar/profile";
 import Login from "./components/login/index";
-import LiveClass from "./components/liveclass/index";
 import ProtectedRoute from "./components/ProtectedRoute"; // Import the new component
 import Reels from "./components/Reels";
 import Library from "./components/Library";
 import Results from "./components/Results";
 import { Toaster } from "react-hot-toast";
+import LiveClasses from "./components/liveclass/index";
 
 const apiUrl = process.env.REACT_APP_API_URL;
 console.log("API URL from .env:", apiUrl);
@@ -36,7 +36,7 @@ function App() {
             <Route path="/library" element={<Library />} />
             <Route path="/results" element={<Results />} />
             <Route path="/notes" element={<Notes />} />
-            <Route path="/liveclass" element={<LiveClass />} />
+            <Route path="/liveclasses" element={<LiveClasses />} />
             <Route path="/reels" element={<Reels />} />
           </Route>
         </Routes>

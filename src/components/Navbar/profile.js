@@ -21,11 +21,10 @@ function UserProfile() {
   
 
   useEffect(() => {
-    console.log(userProfileData, "userProfileData");
     if (userProfileDataError) {
       toast.error(userProfileDataError?.message || "Error occured!");
     }
-  }, [userProfileDataError]);
+  }, [userProfileDataError, userProfileData]);
 
   // Check if departments and subjects are arrays, no need to split
   const departments = Array.isArray(userProfileData?.departments)

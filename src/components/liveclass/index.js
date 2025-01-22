@@ -1,144 +1,53 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import { GiTeacher, GiCalendar } from "react-icons/gi";
+import { FiPlusCircle } from "react-icons/fi";
+import { Card, Button } from "react-bootstrap";
+import { Table } from "antd";
+import { liveClassColumns } from "./data/liveClassColumns";
+import { liveClassData } from "./data/data";
 
-const LiveClassManagement = () => {
-  const [classData, setClassData] = useState({
-    title: '',
-    instructor: '',
-    startTime: '',
-    endTime: '',
-  });
-  const [joinClassId, setJoinClassId] = useState('');
-  const [message, setMessage] = useState('');
-  const [classDetails, setClassDetails] = useState(null);
-
-  const handleCreateClassChange = (e) => {
-    const { name, value } = e.target;
-    setClassData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-  };
-
-  const handleJoinClassChange = (e) => {
-    setJoinClassId(e.target.value);
-  };
-
-  const handleCreateClass = async () => {
-    try {
-      const response = await axios.post('http://localhost:3001/api/live-classes', classData, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`, // Assuming the token is stored in localStorage
-        },
-      });
-      setMessage('Live class created successfully!');
-      setClassDetails(response.data);
-    } catch (error) {
-      setMessage('Failed to create live class');
-    }
-  };
-
-  const handleJoinClass = async () => {
-    try {
-      const response = await axios.post(`http://localhost:3001/api/live-classes/${joinClassId}/join`, {}, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`, // Assuming the token is stored in localStorage
-        },
-      });
-      setMessage('Joined class successfully!');
-      setClassDetails(response.data);
-    } catch (error) {
-      setMessage('Failed to join class');
-    }
-  };
-
+export default function LiveClasses() {
   return (
-    <div className="container mt-5">
-      <h2>Live Class Management</h2>
-
-      <div className="card mb-4">
-        <div className="card-header">Create a Live Class</div>
-        <div className="card-body">
-          <div className="mb-3">
-            <label htmlFor="title" className="form-label">Class Title</label>
-            <input
-              type="text"
-              id="title"
-              name="title"
-              className="form-control"
-              value={classData.title}
-              onChange={handleCreateClassChange}
-            />
+    <div
+      className="content-area p-4"
+      style={{
+        marginLeft: "250px",
+        marginRight: "20px",
+        marginTop: "30px",
+        flexGrow: 1,
+      }}
+    >
+      {/* heading */}
+      <div className="d-flex justify-content-between">
+        <div className="d-flex align-items-center">
+          <div>
+            <GiTeacher style={{ marginRight: "10px", fontSize: "30px" }} />
           </div>
-          <div className="mb-3">
-            <label htmlFor="instructor" className="form-label">Instructor Name</label>
-            <input
-              type="text"
-              id="instructor"
-              name="instructor"
-              className="form-control"
-              value={classData.instructor}
-              onChange={handleCreateClassChange}
-            />
+          <div>
+            <h2>Live Classes</h2>
           </div>
-          <div className="mb-3">
-            <label htmlFor="startTime" className="form-label">Start Time</label>
-            <input
-              type="datetime-local"
-              id="startTime"
-              name="startTime"
-              className="form-control"
-              value={classData.startTime}
-              onChange={handleCreateClassChange}
-            />
-          </div>
-          <div className="mb-3">
-            <label htmlFor="endTime" className="form-label">End Time</label>
-            <input
-              type="datetime-local"
-              id="endTime"
-              name="endTime"
-              className="form-control"
-              value={classData.endTime}
-              onChange={handleCreateClassChange}
-            />
-          </div>
-          <button className="btn btn-primary" onClick={handleCreateClass}>Create Class</button>
+        </div>
+        <div style={{ marginRight: "20px" }}>
+          <Button>
+            <FiPlusCircle style={{ fontSize: "20px" }} /> Schedule New Class
+          </Button>
         </div>
       </div>
 
-      <div className="card mb-4">
-        <div className="card-header">Join a Live Class</div>
-        <div className="card-body">
-          <div className="mb-3">
-            <label htmlFor="classId" className="form-label">Class ID</label>
-            <input
-              type="text"
-              id="classId"
-              className="form-control"
-              value={joinClassId}
-              onChange={handleJoinClassChange}
-            />
-          </div>
-          <button className="btn btn-success" onClick={handleJoinClass}>Join Class</button>
-        </div>
+      {/* upcoming classes */}
+      <div>
+        <Card style={{ width: "18rem", marginTop: "30px" }}>
+          <Card.Body>
+            <Card.Title>
+              <GiCalendar style={{ fontSize: "30px" }} /> Upcoming Classes
+            </Card.Title>
+            <Card.Text style={{ padding: "10px" }}>2</Card.Text>
+          </Card.Body>
+        </Card>
       </div>
-
-      <div className="alert alert-info mt-4" role="alert">
-        {message}
+      {/* tables to see all upcoming and live classes */}
+      <div className="mt-5">
+        <Table className="shadow-sm" columns={liveClassColumns} bordered dataSource={liveClassData} />
       </div>
-
-      {classDetails && (
-        <div className="alert alert-success mt-4">
-          <h4>Class Details:</h4>
-          <p><strong>Title:</strong> {classDetails.title}</p>
-          <p><strong>Instructor:</strong> {classDetails.instructor}</p>
-          <p><strong>Start Time:</strong> {new Date(classDetails.startTime).toLocaleString()}</p>
-          <p><strong>End Time:</strong> {new Date(classDetails.endTime).toLocaleString()}</p>
-        </div>
-      )}
     </div>
   );
-};
-
-export default LiveClassManagement;
+}
