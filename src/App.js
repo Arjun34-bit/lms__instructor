@@ -14,6 +14,7 @@ import Library from "./components/Library";
 import Results from "./components/Results";
 import { Toaster } from "react-hot-toast";
 import LiveClasses from "./components/liveclass/index";
+import ClassRoom from "./components/liveclass/ClassRoom";
 
 const apiUrl = process.env.REACT_APP_API_URL;
 console.log("API URL from .env:", apiUrl);
@@ -38,6 +39,7 @@ function App() {
             <Route path="/notes" element={<Notes />} />
             <Route path="/liveclasses" element={<LiveClasses />} />
             <Route path="/reels" element={<Reels />} />
+            <Route path="/liveclasses/:classId" element={<ClassRoom />} />
           </Route>
         </Routes>
       </BrowserRouter>

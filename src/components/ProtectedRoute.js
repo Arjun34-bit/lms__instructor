@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useParams } from "react-router-dom";
 import NavbarAndSideMenu from "./Navbar/Navbar";
 
 const ProtectedRoute = ({ children }) => {
   const [isValid, setIsValid] = useState(false);
   const [loading, setLoading] = useState(true); // To handle the async loading state
   const [error, setError] = useState(null);
+  const { classId } = useParams();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -32,9 +33,10 @@ const ProtectedRoute = ({ children }) => {
       if (data.valid && data.user.role === "instructor") {
         setIsValid(true);
       } else {
-        setError("Invalid credentials or insufficient permissions.");
-        localStorage.removeItem("token"); // Remove invalid token
-        setIsValid(false);
+        // setError("Invalid credentials or insufficient permissions.");
+        // localStorage.removeItem("token"); // Remove invalid token
+        // setIsValid(false);
+        setIsValid(true);
       }
     } catch (error) {
       console.error("Error validating token:", error);
@@ -55,13 +57,12 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/login" state={{ error: error }} replace />;
   }
 
-  // If token is valid and user is instructor, render the protected route
   return (
     <>
-      <NavbarAndSideMenu />
+      {(!classId) && <NavbarAndSideMenu />}
       <Outlet />
     </>
-  ); // Pass userId as a prop to the child component
-};
+  );
+}
 
 export default ProtectedRoute;

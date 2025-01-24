@@ -15,6 +15,7 @@ function generateRandomDate(startDate, endDate) {
 export const liveClassData = [
     {
       key: "1",
+      classId: "1",
       title: "Django Basics",
       course: "Django",
       startTime: function(){
@@ -31,6 +32,7 @@ export const liveClassData = [
     },
     {
       key: "2",
+      classId: "2",
       title: "React Advanced",
       course: "React",
       startTime: generateRandomDate("2020-01-01", "2025-12-31"),
@@ -39,6 +41,7 @@ export const liveClassData = [
     },
     {
       key: "3",
+      classId: "3",
       title: "Webhooks",
       course: "Nodejs - Basic to Advance",
       startTime: generateRandomDate("2020-01-01", "2025-12-31"),

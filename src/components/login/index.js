@@ -6,7 +6,9 @@ import { setLocalStorageUser } from "../../utils/localStorageUtils";
 
 const Login = () => {
   const [email, setEmail] = useState(localStorage.getItem("email") || "");
-  const [password, setPassword] = useState(localStorage.getItem("password") || "");
+  const [password, setPassword] = useState(
+    localStorage.getItem("password") || ""
+  );
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,10 +29,13 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${envConstant.BACKEND_BASE_URL}/auth/login`, {
-        email,
-        password,
-      });
+      const response = await axios.post(
+        `${envConstant.BACKEND_BASE_URL}/auth/login`,
+        {
+          email,
+          password,
+        }
+      );
 
       const { message, token, user, expiresAt } = response.data;
 
@@ -56,7 +61,11 @@ const Login = () => {
       }
     } catch (error) {
       setSuccess("");
-      setError(error.response?.data?.message || "An error occurred. Please try again.");
+      setError(
+        error.response?.data?.message ||
+          error?.message ||
+          "An error occurred. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -72,18 +81,10 @@ const Login = () => {
           </div>
 
           {/* Validation Errors */}
-          {error && (
-            <div className="mb-4 alert alert-danger">
-              {error}
-            </div>
-          )}
+          {error && <div className="mb-4 alert alert-danger">{error}</div>}
 
           {/* Success Message */}
-          {success && (
-            <div className="alert alert-success">
-              {success}
-            </div>
-          )}
+          {success && <div className="alert alert-success">{success}</div>}
 
           <form onSubmit={handleLogin} noValidate>
             <div className="mb-3">
@@ -129,7 +130,10 @@ const Login = () => {
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
                 />
-                <label className="form-check-label text-muted" htmlFor="remember_me">
+                <label
+                  className="form-check-label text-muted"
+                  htmlFor="remember_me"
+                >
                   Remember me
                 </label>
               </div>

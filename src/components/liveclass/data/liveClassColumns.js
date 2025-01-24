@@ -1,15 +1,14 @@
 import { Button, Tag } from "antd";
 
 const checkIfLiveClass = (startTime, endTime, status) => {
-    if(status !== 'approved') {
-        return false;
-    }
-    console.log(startTime, endTime, 'dt')
-    const now = new Date();
-    return new Date(startTime) <= now && now <= new Date(endTime);
-}
+  if (status !== "approved") {
+    return false;
+  }
+  const now = new Date();
+  return new Date(startTime) <= now && now <= new Date(endTime);
+};
 
-export const liveClassColumns = [
+export const getLiveClassColumns = (handleInstructorClassRoomJoin) => [
   {
     title: "Title",
     dataIndex: "title",
@@ -45,10 +44,17 @@ export const liveClassColumns = [
     title: "Join",
     key: "join",
     render: (record) => {
-      const { startTime, endTime, status } = record;
+      const { classId, startTime, endTime, status } = record;
       const isLive = checkIfLiveClass(startTime, endTime, status);
       if (isLive) {
-        return <Button className="bg-primary text-white px-4">Join</Button>;
+        return (
+          <Button
+            className="bg-primary text-white px-4"
+            onClick={() => handleInstructorClassRoomJoin(classId)}
+          >
+            Join
+          </Button>
+        );
       }
       return <Tag color={"orange"}>Upcoming...</Tag>;
     },

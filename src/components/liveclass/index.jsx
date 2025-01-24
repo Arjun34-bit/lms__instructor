@@ -2,10 +2,41 @@ import { GiTeacher, GiCalendar } from "react-icons/gi";
 import { FiPlusCircle } from "react-icons/fi";
 import { Card, Button } from "react-bootstrap";
 import { Table } from "antd";
-import { liveClassColumns } from "./data/liveClassColumns";
+import { getLiveClassColumns } from "./data/liveClassColumns";
 import { liveClassData } from "./data/data";
+import { useSocket } from "../../context/SocketProvider";
+import { useCallback, useEffect } from "react";
+import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import { getLocalStorageUser } from "../../utils/localStorageUtils";
 
-export default function LiveClasses() {
+const LiveClasses = () => {
+  const socket = useSocket();
+  const navigate = useNavigate();
+
+  const handleInstructorClassRoomJoin = (classId) => {
+    const user = getLocalStorageUser();
+    socket?.emit("joinInstructor", { classId, role: user?.role });
+  };
+
+  const handleJoinInstructorResponse = useCallback(
+    (data) => {
+      toast.success(data?.message);
+      navigate(data?.classId);
+    },
+    [navigate]
+  );
+
+  useEffect(() => {
+    socket?.on("joinInstructorResponse", handleJoinInstructorResponse);
+
+    return () => {
+      socket?.off("joinInstructorResponse", handleJoinInstructorResponse);
+    };
+  }, [socket, handleJoinInstructorResponse]);
+
+  const liveClassColumns = getLiveClassColumns(handleInstructorClassRoomJoin);
+
   return (
     <div
       className="content-area p-4"
@@ -46,8 +77,15 @@ export default function LiveClasses() {
       </div>
       {/* tables to see all upcoming and live classes */}
       <div className="mt-5">
-        <Table className="shadow-sm" columns={liveClassColumns} bordered dataSource={liveClassData} />
+        <Table
+          className="shadow-sm"
+          columns={liveClassColumns}
+          bordered
+          dataSource={liveClassData}
+        />
       </div>
     </div>
   );
-}
+};
+
+export default LiveClasses;
