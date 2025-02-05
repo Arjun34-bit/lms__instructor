@@ -1,27 +1,34 @@
 import axiosClient from "../client";
 
-export const authLoginApi = async ({ email, password }) => {
-  const { data } = await axiosClient.post("/auth/login", { email, password });
+export const authLoginApi = async ({ email, password, rememberMe }) => {
+  const { data } = await axiosClient.post("/instructor/auth/login", {
+    email,
+    password,
+    rememberMe,
+  });
   return data;
 };
 
-export const authSignupApi = async ({
+export const authRegisterApi = async ({
   name,
   email,
   password,
-  phone_number,
-  role,
-  departments,
-  subjects,
+  phoneNumber,
+  departmentId
 }) => {
-  const { data } = await axiosClient.post("/auth/register", {
+  const { data } = await axiosClient.post("/instructor/auth/signup", {
     name,
     email,
     password,
-    phone_number,
-    role,
-    departments,
-    subjects,
+    phoneNumber,
+    departmentId
+  });
+  return data;
+};
+
+export const googleSigninApi = async (idToken) => {
+  const { data } = await axiosClient.post("/instructor/auth/google-login", {
+    idToken,
   });
   return data;
 };

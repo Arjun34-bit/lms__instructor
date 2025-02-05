@@ -1,258 +1,182 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { Button, Form, Input, Alert, Typography, Select } from "antd";
+import { useForm } from "react-hook-form";
+import { Controller } from "react-hook-form";
+import { Link, useNavigate } from "react-router-dom";
+import { registerSchema } from "./schema/registerSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { authRegisterApi } from "../../api/queries/authQueries";
+import { useQuery } from "@tanstack/react-query";
+import { fetchDepartmentsApi } from "../../api/queries/commonQueries";
+import AntdSpinner from "../Spinner/Spinner";
+
+const { Title, Text } = Typography;
+const { Option } = Select;
 
 const Register = () => {
-    const navigate = useNavigate();
-    const [formData, setFormData] = useState({
-        name: "",
-        email: "",
-        password: "",
-        role: "instructor",
-        phone_number: "",
-        departments: [],  // Stores selected departments
-        subjects: [],     // Stores selected subjects
-    });
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const navigate = useNavigate();
+  const { data: departmentsData, isLoading: departmentsDataLoading } = useQuery(
+    {
+      queryFn: () => fetchDepartmentsApi(),
+      keepPreviousData: true,
+    }
+  );
 
-    const [departments, setDepartments] = useState([]); // Department data from the API
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
-    const [loading, setLoading] = useState(false);
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      phoneNumber: "",
+      password: "",
+    },
+  });
 
-    useEffect(() => {
-        // Fetch departments with their subjects
-        const fetchDepartments = async () => {
-            try {
-                const response = await axios.get("http://localhost:3001/api/departments/all");
-                setDepartments(response.data.data); // Update state with departments and their subjects
-            } catch (err) {
-                setError("Failed to load departments.");
-            }
-        };
+  const onRegisterSubmit = async (data) => {
+    try {
+      const registerResponse = await authRegisterApi(data);
+      if (registerResponse?.data) {
+        setSuccess(
+          registerResponse?.data?.message ||
+            `Account created successfully! Please verify your email!`
+        );
+        setTimeout(() => navigate("/login"), 2000);
+      }
+    } catch (error) {
+      setError(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Registration failed. Please try again."
+      );
+    }
+  };
 
-        fetchDepartments();
-    }, []);
+  if (departmentsDataLoading) {
+    return <AntdSpinner />;
+  }
 
-    const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value,
-        });
-    };
+  return (
+    <div
+      style={{
+        width: 600,
+        margin: "auto",
+        padding: "2rem",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+      }}
+    >
+      <Title level={2}>Instructor Register</Title>
+      <Text type="secondary">Create an account</Text>
+      {error && (
+        <Alert message={error} type="error" showIcon className="my-2" />
+      )}
+      {success && (
+        <Alert message={success} type="success" showIcon className="my-2" />
+      )}
+      <Form
+        layout="vertical"
+        style={{ width: "100%" }}
+        onFinish={handleSubmit(onRegisterSubmit)}
+      >
+        <Form.Item
+          label="Name*"
+          validateStatus={errors.name ? "error" : ""}
+          help={errors.name?.message}
+        >
+          <Controller
+            name="name"
+            control={control}
+            render={({ field }) => (
+              <Input {...field} placeholder="Enter your name" />
+            )}
+          />
+        </Form.Item>
 
-    const handleDepartmentChange = (departmentId) => {
-        setFormData((prevFormData) => {
-            const isSelected = prevFormData.departments.includes(departmentId);
-            const updatedDepartments = isSelected
-                ? prevFormData.departments.filter((id) => id !== departmentId)
-                : [...prevFormData.departments, departmentId];
-            return { ...prevFormData, departments: updatedDepartments };
-        });
-    };
-    
-    const handleSubjectChange = (subjectId) => {
-        setFormData((prevFormData) => {
-            const isSelected = prevFormData.subjects.includes(subjectId);
-            const updatedSubjects = isSelected
-                ? prevFormData.subjects.filter((id) => id !== subjectId)
-                : [...prevFormData.subjects, subjectId];
-            return { ...prevFormData, subjects: updatedSubjects };
-        });
-    };
-    
-      
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError("");
-        setSuccess("");
-    
-        try {
-            // Send departments as an array of department IDs
-            const departmentsArray = formData.departments.length > 0
-                ? formData.departments  // Use the selected department IDs array
-                : [];  // Empty array if no departments are selected
-    
-            // Send subjects as an array of subject IDs
-            const subjectsArray = formData.subjects.length > 0
-                ? formData.subjects  // Use the selected subject IDs array
-                : [];  // Empty array if no subjects are selected
-    
-            // Ensure you're sending the updated form data
-            const updatedFormData = { 
-                ...formData, 
-                departments: departmentsArray,  // Send departments as an array of IDs
-                subjects: subjectsArray          // Send subjects as an array of IDs
-            };
-    
-            const response = await axios.post("http://localhost:3001/api/auth/register", updatedFormData);
-    
-            if (formData.role === "instructor") {
-                setSuccess("We are reviewing your application for instructor approval. You will be informed soon.");
-            } else {
-                setSuccess(response.data.message || "Registration successful!");
-            }
-    
-            // Redirect to login page after 2 seconds
-            setTimeout(() => {
-                navigate("/login");  // Redirect to login page
-            }, 2000);
-        } catch (err) {
-            setError(err.response?.data?.message || "An error occurred.");
-        } finally {
-            setLoading(false);
-        }
-    };
-    
-    
-    
-    return (
-        <div className="container mt-5">
-            <div className="row justify-content-center">
-                <div className="col-md-6">
-                    <div className="card shadow">
-                        <div className="card-header text-center bg-primary text-white">
-                            <h2>Register</h2>
-                        </div>
-                        <div className="card-body">
-                            {error && (
-                                <div className="alert alert-danger" role="alert">
-                                    <i className="fas fa-exclamation-circle"></i> {error}
-                                </div>
-                            )}
-                            {success && (
-                                <div className="alert alert-success" role="alert">
-                                    <i className="fas fa-check-circle"></i> {success}
-                                </div>
-                            )}
-                            {loading && (
-                                <div className="text-center my-3">
-                                    <div className="spinner-border text-primary" role="status">
-                                        <span className="visually-hidden">Loading...</span>
-                                    </div>
-                                </div>
-                            )}
-                            {!loading && (
-                                <form onSubmit={handleSubmit}>
-                                    <div className="mb-3">
-                                        <label htmlFor="name" className="form-label">
-                                            <i className="fas fa-user"></i> Name:
-                                        </label>
-                                        <input
-                                            type="text"
-                                            id="name"
-                                            name="name"
-                                            className="form-control"
-                                            value={formData.name}
-                                            onChange={handleChange}
-                                            required
-                                        />
-                                    </div>
-                                    <div className="mb-3">
-                                        <label htmlFor="email" className="form-label">
-                                            <i className="fas fa-envelope"></i> Email:
-                                        </label>
-                                        <input
-                                            type="email"
-                                            id="email"
-                                            name="email"
-                                            className="form-control"
-                                            value={formData.email}
-                                            onChange={handleChange}
-                                            required
-                                        />
-                                    </div>
-                                    <div className="mb-3">
-                                        <label htmlFor="phone_number" className="form-label">
-                                            <i className="fas fa-phone"></i> Phone Number:
-                                        </label>
-                                        <input
-                                            type="tel"
-                                            id="phone_number"
-                                            name="phone_number"
-                                            className="form-control"
-                                            value={formData.phone_number}
-                                            onChange={handleChange}
-                                        />
-                                    </div>
-                                    <div className="mb-3">
-                                        <label htmlFor="password" className="form-label">
-                                            <i className="fas fa-lock"></i> Password:
-                                        </label>
-                                        <input
-                                            type="password"
-                                            id="password"
-                                            name="password"
-                                            className="form-control"
-                                            value={formData.password}
-                                            onChange={handleChange}
-                                            required
-                                        />
-                                    </div>
-                                    <div className="mb-3">
-    <label htmlFor="departments" className="form-label">
-        <i className="fas fa-building"></i> Departments:
-    </label>
-    {departments.length > 0 && (
+        <Form.Item
+          label="Email*"
+          validateStatus={errors.email ? "error" : ""}
+          help={errors.email?.message}
+        >
+          <Controller
+            name="email"
+            control={control}
+            render={({ field }) => (
+              <Input {...field} placeholder="Enter your email" />
+            )}
+          />
+        </Form.Item>
+
+        <Form.Item
+          label="Phone Number*"
+          validateStatus={errors.phoneNumber ? "error" : ""}
+          help={errors.phoneNumber?.message}
+        >
+          <Controller
+            name="phoneNumber"
+            control={control}
+            render={({ field }) => (
+              <Input {...field} placeholder="Enter your phone number" />
+            )}
+          />
+        </Form.Item>
+
+        <Form.Item
+          label="Password*"
+          validateStatus={errors.password ? "error" : ""}
+          help={errors.password?.message}
+        >
+          <Controller
+            name="password"
+            control={control}
+            render={({ field }) => (
+              <Input.Password {...field} placeholder="Enter your password" />
+            )}
+          />
+        </Form.Item>
+
+        <Form.Item
+          label="Department"
+          validateStatus={errors.department ? "error" : ""}
+        >
+          <Controller
+            name="departmentId"
+            control={control}
+            render={({ field }) => (
+              <Select {...field} placeholder="Select department (optional)">
+                {departmentsData?.data &&
+                  departmentsData?.data?.map((department, index) => {
+                    return (
+                      <Option value={department?.id} key={index}>
+                        {department?.name}
+                      </Option>
+                    );
+                  })}
+              </Select>
+            )}
+          />
+        </Form.Item>
         <div>
-            {departments.map((dept) => (
-                <div key={dept.id} className="form-check">
-                    <input
-                        type="checkbox"
-                        id={`department-${dept.id}`}
-                        className="form-check-input"
-                        checked={formData.departments.includes(dept.id)}
-                        onChange={() => handleDepartmentChange(dept.id)}
-                    />
-                    <label htmlFor={`department-${dept.id}`} className="form-check-label">
-                        {dept.name}
-                    </label>
-                </div>
-            ))}
+          <Form.Item>
+            <Button type="primary" htmlType="submit" block>
+              {isSubmitting ? "Registering..." : "Register"}
+            </Button>
+          </Form.Item>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <Link to={"/login"}>Already have an account? Log in</Link>
+          </div>
         </div>
-    )}
-</div>
-
-<div className="mb-3">
-    <label htmlFor="subjects" className="form-label">
-        <i className="fas fa-book"></i> Subjects:
-    </label>
-    {formData.departments.length > 0 && (
-        <div>
-            {formData.departments.map((departmentId) => {
-                const department = departments.find((dept) => dept.id === departmentId);
-                return department?.subjects.map((subject) => (
-                    <div key={subject.id} className="form-check">
-                        <input
-                            type="checkbox"
-                            id={`subject-${subject.id}`}  // Use subject.id
-                            className="form-check-input"
-                            checked={formData.subjects.includes(subject.id)}  // Check for subject.id
-                            onChange={() => handleSubjectChange(subject.id)}  // Use subject.id
-                        />
-                        <label htmlFor={`subject-${subject.id}`} className="form-check-label">
-                            {subject.name}
-                        </label>
-                    </div>
-                ));
-            })}
-        </div>
-    )}
-</div>
-
-                                    <div className="d-grid">
-                                        <button type="submit" className="btn btn-primary">
-                                            <i className="fas fa-user-plus"></i> Register
-                                        </button>
-                                    </div>
-                                </form>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
+      </Form>
+    </div>
+  );
 };
 
 export default Register;

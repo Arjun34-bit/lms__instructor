@@ -1,27 +1,17 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { SocketProvider } from "./context/SocketProvider";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000, // 10 minutes
-      retry: 1, // Retry failed requests once
-    },
-  },
-});
+import { queryClient } from "./api/client";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <SocketProvider>
+    {/* <SocketProvider> */}
+      <QueryClientProvider client={queryClient}>
         <App />
-      </SocketProvider>
-    </QueryClientProvider>
+      </QueryClientProvider>
+    {/* </SocketProvider> */}
   </React.StrictMode>
 );

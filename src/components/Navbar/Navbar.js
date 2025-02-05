@@ -1,54 +1,23 @@
 import React, { useState, useEffect } from "react";
-import { NavLink, Link } from "react-router-dom";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 import { Button, Dropdown } from "react-bootstrap";
 import { FaBook, FaUsers, FaFilm, FaChartBar, FaBell } from "react-icons/fa";
 import TidioChat from "./TidioChat";
+import { getLocalStorageUser } from "../../utils/localStorageUtils";
 
 function NavbarAndSideMenu() {
-  const [isValidToken, setIsValidToken] = useState(false);
   const [userData, setUserData] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-
-    if (token) {
-      validateToken(token);
-    }
+    const user = getLocalStorageUser();
+    setUserData({...user});
   }, []);
-
-  const validateToken = async (token) => {
-    try {
-      const response = await fetch(
-        "http://localhost:3001/api/auth/validate-token",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-
-      if (data.valid) {
-        setIsValidToken(true);
-        setUserData(data.user);
-      } else {
-        setIsValidToken(false);
-        localStorage.removeItem("authToken");
-      }
-    } catch (error) {
-      console.error("Error validating token:", error);
-      setIsValidToken(false);
-      localStorage.removeItem("authToken");
-    }
-  };
 
   const handleLogout = () => {
     localStorage.clear();
-    window.location.href = "/login";
-  };
+    return navigate('/login')
+  }
 
   return (
     <div className="d-flex">
@@ -90,7 +59,7 @@ function NavbarAndSideMenu() {
               </li>
               <li className="nav-item ms-3">{/* <TidioChat /> */}</li>
 
-              {isValidToken && userData ? (
+              {userData ? (
                 <li className="nav-item ms-3">
                   <Dropdown>
                     <Dropdown.Toggle variant="light" id="user-dropdown">

@@ -2,9 +2,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSocket } from "../../context/SocketProvider";
 import toast from "react-hot-toast";
-// import { getLocalStorageUser } from "../../utils/localStorageUtils";
+import { getLocalStorageUser } from "../../utils/localStorageUtils";
 import SimplePeer from "simple-peer";
 import { FaChevronCircleLeft } from "react-icons/fa";
+import { Button } from "react-bootstrap";
 
 const ClassRoom = () => {
   const { classId } = useParams();
@@ -14,6 +15,7 @@ const ClassRoom = () => {
   const localVideoRef = useRef(null);
   const remoteVideoRefs = useRef({});
   const navigate = useNavigate();
+  const [initiator, setInitiator] = useState(true);
 
   useEffect(() => {
     navigator.mediaDevices
@@ -25,12 +27,12 @@ const ClassRoom = () => {
         }
       });
 
-    socket.on("signal", (data) => {
-      const { userId, signal } = data;
-      if (peers[userId]) {
-        peers[userId].signal(signal);
-      }
-    });
+      socket.on("signal", (data) => {
+        const { userId, signal } = data;
+        if (peers[userId]) {
+          peers[userId].signal(signal);
+        }
+      });
 
     return () => {
       socket.off("signal");
@@ -45,7 +47,7 @@ const ClassRoom = () => {
     });
 
     newPeer.on("signal", (data) => {
-      socket.emit("signal", { userId, signal: data });
+      socket.emit("signal", { classId, signal: data });
     });
 
     newPeer.on("stream", (remoteStream) => {
@@ -59,7 +61,10 @@ const ClassRoom = () => {
     socket.on("joinStudentResponse", (data) => {
       const { message, userId } = data;
       toast.success(message);
-      createPeer(userId, false); // Create peer as a non-initiator
+      createPeer(userId, initiator); // Create peer as a non-initiator
+      if(initiator) {
+        setInitiator(false);
+      }
     });
 
     return () => {
@@ -67,15 +72,15 @@ const ClassRoom = () => {
     };
   }, [socket]);
 
-  // const handleStudentJoin = () => {
-  //   const userData = getLocalStorageUser();
-  //   socket.emit("joinStudent", {
-  //     userId: userData?.userId,
-  //     name: userData?.name,
-  //     role: userData?.role,
-  //     classId,
-  //   });
-  // };
+  const handleStudentJoin = () => {
+    const userData = getLocalStorageUser();
+    socket.emit("joinStudent", {
+      userId: userData?.userId,
+      name: userData?.name,
+      role: userData?.role,
+      classId,
+    });
+  };
 
   const leaveClassRoom = () => {
     if (localVideoRef.current) localVideoRef.current.srcObject = null;
@@ -92,6 +97,11 @@ const ClassRoom = () => {
           onClick={leaveClassRoom}
           style={{ fontSize: "30px", color: "white", cursor: "pointer" }}
         />
+      </div>
+      <div
+        style={{ position: "absolute", top: "30px", left: "100px", zIndex: 10 }}
+      >
+        <Button onClick={handleStudentJoin}>Join as Student</Button>
       </div>
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <video

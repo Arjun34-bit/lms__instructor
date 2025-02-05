@@ -15,6 +15,8 @@ import Results from "./components/Results";
 import { Toaster } from "react-hot-toast";
 import LiveClasses from "./components/liveclass/index";
 import ClassRoom from "./components/liveclass/ClassRoom";
+import AuthListener from "./eventListeners/AuthListener";
+import PageNotFound from "./components/PageNotFound";
 
 const apiUrl = process.env.REACT_APP_API_URL;
 console.log("API URL from .env:", apiUrl);
@@ -23,6 +25,7 @@ function App() {
     <>
       <Toaster position="top-center" reverseOrder={false} />
       <BrowserRouter>
+        <AuthListener />
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -41,6 +44,7 @@ function App() {
             <Route path="/reels" element={<Reels />} />
             <Route path="/liveclasses/:classId" element={<ClassRoom />} />
           </Route>
+          <Route path="*" element={<PageNotFound />} />
         </Routes>
       </BrowserRouter>
     </>
