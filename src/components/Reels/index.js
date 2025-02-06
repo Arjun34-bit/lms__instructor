@@ -1,10 +1,9 @@
 export default function Reels() {
     return (
       <div
-        className="content-area p-4"
+        className="content-area"
         style={{
           marginLeft: "250px",
-          marginTop: "30px",
           flexGrow: 1,
         }}
       >

@@ -1,7 +1,6 @@
 import { GiTeacher, GiCalendar } from "react-icons/gi";
 import { FiPlusCircle } from "react-icons/fi";
-import { Card, Button } from "react-bootstrap";
-import { Table } from "antd";
+import { Table, Card, Button } from "antd";
 import { getLiveClassColumns } from "./data/liveClassColumns";
 import { liveClassData } from "./data/data";
 import { useSocket } from "../../context/SocketProvider";
@@ -58,7 +57,7 @@ const LiveClasses = () => {
           </div>
         </div>
         <div style={{ marginRight: "20px" }}>
-          <Button>
+          <Button type="primary" style={{padding: "20px 10px"}}>
             <FiPlusCircle style={{ fontSize: "20px" }} /> Schedule New Class
           </Button>
         </div>
@@ -66,13 +65,21 @@ const LiveClasses = () => {
 
       {/* upcoming classes */}
       <div>
-        <Card style={{ width: "18rem", marginTop: "30px" }}>
-          <Card.Body>
-            <Card.Title>
-              <GiCalendar style={{ fontSize: "30px" }} /> Upcoming Classes
-            </Card.Title>
-            <Card.Text style={{ padding: "10px" }}>2</Card.Text>
-          </Card.Body>
+        <Card
+          style={{ width: "18rem", marginTop: "30px" }}
+          bordered={true}
+        >
+          <Card.Meta
+            avatar={
+              <GiCalendar style={{ fontSize: "30px" }} /> 
+            }
+            title="Upcoming Classes"
+            description={
+              <div>
+                <p style={{fontSize: 17, fontWeight: 600}}>2</p>
+              </div>
+            }
+          />
         </Card>
       </div>
       {/* tables to see all upcoming and live classes */}

@@ -1,10 +1,8 @@
 import React from "react";
-import "./App.css";
 import Homepage from "./components/Homepage/Homepage";
 import Course from "./components/Course/Course";
 import Register from "./components/register/index";
 import { Routes, Route, BrowserRouter } from "react-router-dom";
-import AddCourseForm from "./components/Course/AddCourseForm";
 import Notes from "./components/Notes/Notes";
 import UserProfile from "./components/Navbar/profile";
 import Login from "./components/login/index";
@@ -17,6 +15,7 @@ import LiveClasses from "./components/liveclass/index";
 import ClassRoom from "./components/liveclass/ClassRoom";
 import AuthListener from "./eventListeners/AuthListener";
 import PageNotFound from "./components/PageNotFound";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 const apiUrl = process.env.REACT_APP_API_URL;
 console.log("API URL from .env:", apiUrl);
@@ -36,7 +35,6 @@ function App() {
             <Route path="/user-profile/:userId" element={<UserProfile />} />
 
             <Route path="/course" element={<Course />} />
-            <Route path="/addcourse" element={<AddCourseForm />} />
             <Route path="/library" element={<Library />} />
             <Route path="/results" element={<Results />} />
             <Route path="/notes" element={<Notes />} />

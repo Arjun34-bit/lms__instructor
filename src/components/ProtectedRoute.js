@@ -12,6 +12,7 @@ const ProtectedRoute = ({ children }) => {
     data: userProfileData,
     isLoading: userProfileDataLoading,
   } = useQuery({
+    queryKey: ["userProfileData"],
     queryFn: () => fetchUserProfileData(),
     keepPreviousData: true,
   });

@@ -4,7 +4,6 @@ export default function Library() {
       className="content-area p-4"
       style={{
         marginLeft: "250px",
-        marginTop: "30px",
         flexGrow: 1,
       }}
     >
