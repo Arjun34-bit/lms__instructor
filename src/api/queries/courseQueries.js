@@ -18,7 +18,10 @@ export const fetchAssignedCoursesStatsApi = async () => {
 export const addCourseApi = async (payload) => {
   const { data } = await axiosClient.post(
     `/instructor/course`,
-    {...payload}
+    payload,
+    {
+      headers: { "Content-Type": "multipart/form-data" },
+    }
   );
   return data;
 }

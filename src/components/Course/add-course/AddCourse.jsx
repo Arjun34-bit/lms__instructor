@@ -93,6 +93,25 @@ const AddCourse = ({
       )}
       <Form layout="vertical" onFinish={handleSubmit(onSubmit)}>
         <Form.Item
+          label="Thumbnail"
+          validateStatus={errors.thumbnail ? "error" : ""}
+          help={errors.thumbnail?.message}
+          required
+        >
+          <Controller
+            name="thumbnail"
+            control={control}
+            render={({ field }) => (
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={(e) => field.onChange(e.target.files[0])}
+              />
+            )}
+          />
+        </Form.Item>
+
+        <Form.Item
           label="Title"
           validateStatus={errors.title ? "error" : ""}
           help={errors.title?.message}

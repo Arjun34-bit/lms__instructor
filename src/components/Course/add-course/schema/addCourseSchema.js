@@ -13,19 +13,26 @@ export const addCourseSchema = z
 
     level: z.enum(["Begineer", "Intermediate", "Advanced"]),
 
-    languageId: z.string().min(1, {message: "Language is required"}),
+    languageId: z.string().min(1, { message: "Language is required" }),
 
-    categoryId: z.string().min(1, {message: "Category is required"}),
+    categoryId: z.string().min(1, { message: "Category is required" }),
 
-    departmentId: z.string().min(1, {message: "Department is required"}),
+    departmentId: z.string().min(1, { message: "Department is required" }),
 
-    subjectId: z.string().min(1, {message: "Subject is required"}),
+    subjectId: z.string().min(1, { message: "Subject is required" }),
 
     startDate: z.date(),
 
     endDate: z.date(),
 
     price: z.number(),
+
+    thumbnail: z
+      .instanceof(File, { message: "Thumbnail is required" })
+      .refine(
+        (file) => file.size < 5 * 1024 * 1024,
+        "File must be less than 5MB"
+      ),
   })
   .refine((data) => data.startDate >= new Date(), {
     message: "Start date must be today or later",
