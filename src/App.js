@@ -12,7 +12,7 @@ import Library from "./components/Library";
 import Results from "./components/Results";
 import { Toaster } from "react-hot-toast";
 import LiveClasses from "./components/liveclass/index";
-// import ClassRoom from "./components/liveclass/ClassRoom";
+import ClassRoom from "./components/liveclass/ClassRoom";
 import AuthListener from "./eventListeners/AuthListener";
 import PageNotFound from "./components/PageNotFound";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -40,7 +40,7 @@ function App() {
             <Route path="/notes" element={<Notes />} />
             <Route path="/liveclasses" element={<LiveClasses />} />
             <Route path="/reels" element={<Reels />} />
-            {/* <Route path="/liveclasses/:classId" element={<ClassRoom />} /> */}
+            <Route path="/liveclasses/:classId" element={<ClassRoom />} />
           </Route>
           <Route path="*" element={<PageNotFound />} />
         </Routes>
