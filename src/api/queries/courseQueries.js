@@ -25,3 +25,9 @@ export const addCourseApi = async (payload) => {
   );
   return data;
 }
+export const getAllCoursesApi = async (pageNumber = 1) => {
+  const { data } = await axiosClient.get(
+    `/instructor/course/all-courses?pageNumber=${pageNumber}`
+  );
+  return data;
+};

@@ -32,3 +32,10 @@ export const googleSigninApi = async (idToken) => {
   });
   return data;
 };
+
+export const authLoginWithPhoneApi = async (idToken) => {
+  const response = await axiosClient.post(`${process.env.REACT_APP_BACKEND_BASE_URL}/instructor/auth/login-with-phone-number`, {
+    idToken
+  });
+  return response.data;
+};

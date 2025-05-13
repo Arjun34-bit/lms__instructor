@@ -44,6 +44,7 @@ export const getLiveClassColumns = (handleInstructorClassRoomJoin) => [
     title: "Join",
     key: "join",
     render: (record) => {
+      console.log(record);  
       const { classId, startTime, endTime, status } = record;
       const isLive = checkIfLiveClass(startTime, endTime, status);
       if (isLive) {

@@ -4,18 +4,21 @@ import { Table, Card, Button } from "antd";
 import { getLiveClassColumns } from "./data/liveClassColumns";
 import { liveClassData } from "./data/data";
 import { useSocket } from "../../context/SocketProvider";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { getLocalStorageUser } from "../../utils/localStorageUtils";
+import { useQuery } from "@tanstack/react-query";
+import { getAllCoursesApi } from "../../api/queries/courseQueries";
 
 const LiveClasses = () => {
+  const [currentPage, setCurrentPage] = useState(1);
   const socket = useSocket();
   const navigate = useNavigate();
 
   const handleInstructorClassRoomJoin = (classId) => {
     const user = getLocalStorageUser();
-    socket?.emit("joinInstructor", { classId, role: user?.role });
+    socket?.emit("joinInstructor", { classId, role: user?.role, });
   };
 
   const handleJoinInstructorResponse = useCallback(
@@ -35,7 +38,15 @@ const LiveClasses = () => {
   }, [socket, handleJoinInstructorResponse]);
 
   const liveClassColumns = getLiveClassColumns(handleInstructorClassRoomJoin);
-
+  const {
+    data,
+    isLoading 
+  } = useQuery({
+    queryKey: ["getAllCoursesData", currentPage],
+    queryFn: () => getAllCoursesApi(currentPage),
+    keepPreviousData: true,
+  });
+  console.log(data);
   return (
     <div
       className="content-area p-4"
@@ -88,7 +99,7 @@ const LiveClasses = () => {
           className="shadow-sm"
           columns={liveClassColumns}
           bordered
-          dataSource={liveClassData}
+          dataSource={data?.data || []  }
         />
       </div>
     </div>

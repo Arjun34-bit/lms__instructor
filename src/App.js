@@ -16,6 +16,7 @@ import ClassRoom from "./components/liveclass/ClassRoom";
 import AuthListener from "./eventListeners/AuthListener";
 import PageNotFound from "./components/PageNotFound";
 import "bootstrap/dist/css/bootstrap.min.css";
+import PhoneLogin from "./components/login/PhoneLogin";
 
 const apiUrl = process.env.REACT_APP_API_URL;
 console.log("API URL from .env:", apiUrl);
@@ -27,6 +28,8 @@ function App() {
         <AuthListener />
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/login-phone" element={<PhoneLogin />} />
+
           <Route path="/register" element={<Register />} />
 
           <Route path="/" element={<Login />} />

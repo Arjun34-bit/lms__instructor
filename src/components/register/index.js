@@ -9,6 +9,7 @@ import { authRegisterApi } from "../../api/queries/authQueries";
 import { useQuery } from "@tanstack/react-query";
 import { fetchDepartmentsApi } from "../../api/queries/commonQueries";
 import AntdSpinner from "../Spinner/Spinner";
+import { Divider } from "antd";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -33,7 +34,6 @@ const Register = () => {
     defaultValues: {
       name: "",
       email: "",
-      phoneNumber: "",
       password: "",
     },
   });
@@ -116,20 +116,6 @@ const Register = () => {
         </Form.Item>
 
         <Form.Item
-          label="Phone Number*"
-          validateStatus={errors.phoneNumber ? "error" : ""}
-          help={errors.phoneNumber?.message}
-        >
-          <Controller
-            name="phoneNumber"
-            control={control}
-            render={({ field }) => (
-              <Input {...field} placeholder="Enter your phone number" />
-            )}
-          />
-        </Form.Item>
-
-        <Form.Item
           label="Password*"
           validateStatus={errors.password ? "error" : ""}
           help={errors.password?.message}
@@ -167,8 +153,14 @@ const Register = () => {
         <div>
           <Form.Item>
             <Button type="primary" htmlType="submit" block>
-              {isSubmitting ? "Registering..." : "Register"}
+              {isSubmitting ? "Registering..." : "Register with Email"}
             </Button>
+          </Form.Item>
+          <Divider>OR</Divider>
+          <Form.Item>
+            <Link to="/phone-register">
+              <Button block>Register with Phone Number</Button>
+            </Link>
           </Form.Item>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <Link to={"/login"}>Already have an account? Log in</Link>
