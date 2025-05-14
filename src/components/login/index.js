@@ -56,8 +56,8 @@ const Login = () => {
     } catch (error) {
       setError(
         error?.response?.data?.message ||
-          error?.message ||
-          "Google Sign-In Failed. Try again."
+        error?.message ||
+        "Google Sign-In Failed. Try again."
       );
     }
   };
@@ -181,6 +181,12 @@ const Login = () => {
           icon={<FaFacebook size={20} />}
           onClick={handleFacebookSignIn}
         />
+
+      </div>
+      <div style={{ marginTop:"10px"}}>
+        <Link to="/login-phone">
+          <Button block>Login with Phone Number</Button>
+        </Link>
       </div>
     </div>
   );

@@ -16,6 +16,7 @@ export const authRegisterApi = async ({
   phoneNumber,
   departmentId
 }) => {
+  
   const { data } = await axiosClient.post("/instructor/auth/signup", {
     name,
     email,
