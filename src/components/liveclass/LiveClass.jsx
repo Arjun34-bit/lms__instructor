@@ -71,26 +71,26 @@ const LiveClass = () => {
   };
 
 
-  const handleCreateDevice = async() => {
+  const handleCreateDevice = async () => {
+    if (!rtpCapabilities || !rtpCapabilities.codecs) {
+      console.warn("RTP Capabilities not ready:", rtpCapabilities);
+      return;
+    }
+  
     try {
-        const device = new mediasoupClient.Device();
-    
-        // Load the RTP capabilities from the router (server)
-        await device.load({ rtpCapabilities });
-    
-        console.log('Device loaded successfully!');
-        return device;
-      } catch (error) {
-        console.error('Error creating device:', error);
-    
-        if (error.name === 'UnsupportedError') {
-          console.error('Browser not supported for mediasoup');
-        }
-    
-        throw error;
-      }
-    // TODO: Create mediasoup device
+      const device = new mediasoupClient.Device();
+      await device.load({
+        routerRtpCapabilities: rtpCapabilities, 
+      });
+  
+      console.log('RTP Capabilities:', rtpCapabilities);
+      console.log('Device created successfully');
+      return device;
+    } catch (error) {
+      console.error("Error creating device:", error);
+    }
   };
+  
 
   const handleCreateSendTransport = () => {
     // TODO: Create send transport
