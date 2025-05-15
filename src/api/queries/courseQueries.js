@@ -31,3 +31,12 @@ export const getAllCoursesApi = async (pageNumber = 1) => {
   );
   return data;
 };
+
+
+export const getAllCoursesApiWithoutPageNo = async () => {
+  const { data } = await axiosClient.get(
+    `/instructor/course/assigned-courses`
+  );
+  return data;
+};
+

@@ -9,12 +9,14 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { getLocalStorageUser } from "../../utils/localStorageUtils";
 import { useQuery } from "@tanstack/react-query";
-import { getAllCoursesApi } from "../../api/queries/courseQueries";
+import AddClass from "./AddClass";
+import { fetchLiveClassesApi } from "../../api/queries/classesQueries";
 
 const LiveClasses = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const socket = useSocket();
   const navigate = useNavigate();
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   const handleInstructorClassRoomJoin = (classId) => {
     const user = getLocalStorageUser();
@@ -38,15 +40,17 @@ const LiveClasses = () => {
   }, [socket, handleJoinInstructorResponse]);
 
   const liveClassColumns = getLiveClassColumns(handleInstructorClassRoomJoin);
+
   const {
-    data,
-    isLoading 
+    data: liveClassesData,
+    isLoading,
+    refetch: liveClassesRefetch
   } = useQuery({
-    queryKey: ["getAllCoursesData", currentPage],
-    queryFn: () => getAllCoursesApi(currentPage),
+    queryKey: ["liveClassesData", currentPage],
+    queryFn: () => fetchLiveClassesApi(currentPage),
     keepPreviousData: true,
   });
-  console.log(data);
+
   return (
     <div
       className="content-area p-4"
@@ -68,7 +72,9 @@ const LiveClasses = () => {
           </div>
         </div>
         <div style={{ marginRight: "20px" }}>
-          <Button type="primary" style={{padding: "20px 10px"}}>
+          <Button type="primary" style={{padding: "20px 10px"}}
+           onClick={() => setIsModalVisible(true)}
+          >
             <FiPlusCircle style={{ fontSize: "20px" }} /> Schedule New Class
           </Button>
         </div>
@@ -99,10 +105,18 @@ const LiveClasses = () => {
           className="shadow-sm"
           columns={liveClassColumns}
           bordered
-          dataSource={data?.data || []  }
+          // dataSource={data?.data || []  }
+           dataSource={liveClassData}
+
         />
       </div>
+      <AddClass 
+    visible={isModalVisible}
+    onClose={() => setIsModalVisible(false)}
+    classesRefetch={liveClassesRefetch}
+  />
     </div>
+    
   );
 };
 
