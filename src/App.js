@@ -18,6 +18,7 @@ import PageNotFound from "./components/PageNotFound";
 import "bootstrap/dist/css/bootstrap.min.css";
 import PhoneRegister from "./components/phoneNoRegisterLogin/PhoneRegister";
 import PhoneLogin from "./components/phoneNoRegisterLogin/PhoneLogin";
+import LiveClass from "./components/liveclass/LiveClass";
 // import PhoneLogin from "./components/login/PhoneLogin";
 
 const apiUrl = process.env.REACT_APP_API_URL;
@@ -47,7 +48,8 @@ function App() {
             <Route path="/notes" element={<Notes />} />
             <Route path="/liveclasses" element={<LiveClasses />} />
             <Route path="/reels" element={<Reels />} />
-            <Route path="/liveclasses/:classId" element={<ClassRoom />} />
+            {/* <Route path="/liveclasses/:classId" element={<ClassRoom />} /> */}
+            <Route path="/live-class-room" element={<LiveClass />} />
           </Route>
           <Route path="*" element={<PageNotFound />} />
         </Routes>

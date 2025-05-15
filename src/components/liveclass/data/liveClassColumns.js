@@ -1,5 +1,6 @@
 import { Button, Tag } from "antd";
 
+
 const checkIfLiveClass = (startTime, endTime, status) => {
   if (status !== "approved") {
     return false;
@@ -7,6 +8,8 @@ const checkIfLiveClass = (startTime, endTime, status) => {
   const now = new Date();
   return new Date(startTime) <= now && now <= new Date(endTime);
 };
+
+
 
 export const getLiveClassColumns = (handleInstructorClassRoomJoin) => [
   {
@@ -48,10 +51,12 @@ export const getLiveClassColumns = (handleInstructorClassRoomJoin) => [
       const { classId, startTime, endTime, status } = record;
       const isLive = checkIfLiveClass(startTime, endTime, status);
       if (isLive) {
+       
         return (
           <Button
             className="bg-primary text-white px-4"
-            onClick={() => handleInstructorClassRoomJoin(classId)}
+            // onClick={() => handleInstructorClassRoomJoin(classId)}
+            onClick={() => window.location.href = `/live-class-room`}
           >
             Join
           </Button>
