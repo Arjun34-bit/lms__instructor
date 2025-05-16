@@ -19,6 +19,7 @@ const LiveClass = () => {
   const [remoteVideoReady, setRemoteVideoReady] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [remoteStream, setRemoteStream] = useState(null);
 
   const consumerTransportRef = useRef(null);
   const consumerRef = useRef(null);
@@ -45,6 +46,27 @@ const LiveClass = () => {
       socket.disconnect();
     };
   }, []);
+
+  // Effect to handle auto-play when remote stream is ready
+  useEffect(() => {
+    if (remoteStream && remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = remoteStream;
+      
+      // Try to autoplay - may be blocked by browser policies
+      const playPromise = remoteVideoRef.current.play();
+      
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            console.log('Remote video playing automatically');
+          })
+          .catch(err => {
+            console.warn('Autoplay prevented by browser:', err.message);
+            // We'll let the user click play manually
+          });
+      }
+    }
+  }, [remoteStream]);
 
   console.log("socketid", socketId);
 
@@ -354,6 +376,7 @@ const LiveClass = () => {
     setLoading(true);
     setError('');
     setRemoteVideoReady(false);
+    setRemoteStream(null); // Reset remote stream
     
     if (!consumerTransportRef.current) {
       const errorMsg = "Receive transport not created. Please click button 6 first.";
@@ -396,8 +419,7 @@ const LiveClass = () => {
         console.log('Consume response:', response);
         
         try {
-          // Create consumer - THE MAIN ISSUE IS HERE
-          // The server is sending the parameters directly now, not nested in a params object
+          // Create consumer
           const consumer = await consumerTransportRef.current.consume({
             id: response.id,
             producerId: response.producerId,
@@ -411,18 +433,15 @@ const LiveClass = () => {
           const stream = new MediaStream();
           stream.addTrack(consumer.track);
           
-          // Set the stream to the remote video element
-          if (remoteVideoRef.current) {
-            remoteVideoRef.current.srcObject = stream;
-            
-            // Resume the consumer to start receiving media
-            socketRef.current.emit('consumer-resume');
-            
-            // Set state to indicate remote video is ready
-            setRemoteVideoReady(true);
-            
-            console.log('Consumer created and stream connected to remote video element');
-          }
+          // Store the stream in state
+          setRemoteStream(stream);
+          
+          // Resume the consumer to start receiving media
+          socketRef.current.emit('consumer-resume');
+          
+          // Set state to indicate remote video is ready
+          setRemoteVideoReady(true);
+          console.log('Consumer created and stream ready');
           
           setLoading(false);
         } catch (err) {
@@ -436,7 +455,7 @@ const LiveClass = () => {
   
   // Handle manual play for remote video
   const handlePlayRemoteVideo = () => {
-    if (remoteVideoRef.current) {
+    if (remoteVideoRef.current && remoteVideoRef.current.srcObject) {
       remoteVideoRef.current.play()
         .then(() => {
           console.log('Remote video playing successfully');
@@ -445,6 +464,8 @@ const LiveClass = () => {
           console.error('Manual play error:', err);
           setError(`Manual play error: ${err.message}. Please try clicking again.`);
         });
+    } else {
+      setError('No video stream available. Please complete steps 6 and 7 first.');
     }
   };
 
@@ -477,31 +498,45 @@ const LiveClass = () => {
       <div className="video-section">
         <div className="video-box">
           <h2 className="section-title">Remote Video</h2>
-          <video 
-              ref={remoteVideoRef} 
-              playsInline 
-              controls
-              onClick={handlePlayRemoteVideo}
-              style={{ cursor: 'pointer', display: remoteVideoReady ? 'block' : 'none' }}
-          />
-          {remoteVideoReady && (
-            <div className="play-indicator">
-              <button 
+          {remoteVideoReady ? (
+            <>
+              <video 
+                ref={remoteVideoRef} 
+                className="remote-video"
+                playsInline 
+                autoPlay
                 onClick={handlePlayRemoteVideo}
-                className="play-button"
-              >
-                Play Remote Video
-              </button>
-              <p className="helper-text">Click the video or button to play</p>
-            </div>
+                style={{ cursor: 'pointer', width: '100%', height: 'auto' }}
+              />
+              <div className="play-indicator">
+                <button 
+                  onClick={handlePlayRemoteVideo}
+                  className="play-button"
+                >
+                  Play Remote Video
+                </button>
+                <p className="helper-text">Click the video or button to play</p>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="empty-video-placeholder">
+                {loading ? <div className="spinner">Loading...</div> : "No remote video"}
+              </div>
+            </>
           )}
-          {loading && <div className="spinner">Loading...</div>}
         </div>
         <div className="button-group">
           <button onClick={handleCreateRecvTransport} disabled={loading}>6. Create Recv Transport</button>
           <button onClick={handleConnectRecvTransportAndConsume} disabled={loading}>
             7. Connect Recv Transport and Consume
           </button>
+        </div>
+        <div className="connection-status">
+          <p>Consumer status: {remoteVideoReady ? "Connected" : "Not connected"}</p>
+          {remoteVideoReady && !loading && (
+            <p className="success-message">Remote video ready! Click to play if not playing automatically.</p>
+          )}
         </div>
       </div>
     </div>
