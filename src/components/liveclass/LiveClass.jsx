@@ -50,21 +50,33 @@ const LiveClass = () => {
   // Effect to handle auto-play when remote stream is ready
   useEffect(() => {
     if (remoteStream && remoteVideoRef.current) {
+      console.log('Setting remote stream to video element:', remoteStream);
+      console.log('Remote stream tracks:', remoteStream.getTracks());
+      
+      // Make sure the video element is properly configured
+      remoteVideoRef.current.srcObject = null; // Clear previous streams
       remoteVideoRef.current.srcObject = remoteStream;
       
-      // Try to autoplay - may be blocked by browser policies
-      const playPromise = remoteVideoRef.current.play();
+      // Set explicit size to ensure display
+      remoteVideoRef.current.style.width = '100%';
+      remoteVideoRef.current.style.height = 'auto';
+      remoteVideoRef.current.style.backgroundColor = '#000'; // Visual indication
       
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            console.log('Remote video playing automatically');
-          })
-          .catch(err => {
-            console.warn('Autoplay prevented by browser:', err.message);
-            // We'll let the user click play manually
-          });
-      }
+      // Try to autoplay - may be blocked by browser policies
+      setTimeout(() => {
+        const playPromise = remoteVideoRef.current.play();
+        
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              console.log('Remote video playing automatically');
+            })
+            .catch(err => {
+              console.warn('Autoplay prevented by browser:', err.message);
+              // We'll let the user click play manually
+            });
+        }
+      }, 500); // Small delay to ensure stream is properly attached
     }
   }, [remoteStream]);
 
@@ -429,18 +441,34 @@ const LiveClass = () => {
           
           consumerRef.current = consumer;
           
+          // Debug the consumer track state
+          console.log('Consumer track info:', {
+            kind: consumer.track.kind,
+            enabled: consumer.track.enabled,
+            readyState: consumer.track.readyState,
+            muted: consumer.track.muted
+          });
+          
           // Create a new MediaStream from the consumer's track
           const stream = new MediaStream();
           stream.addTrack(consumer.track);
           
-          // Store the stream in state
-          setRemoteStream(stream);
+          // Debug the created stream
+          console.log('Created MediaStream with tracks:', 
+            stream.getTracks().map(t => ({
+              kind: t.kind,
+              enabled: t.enabled,
+              readyState: t.readyState
+            }))
+          );
           
           // Resume the consumer to start receiving media
           socketRef.current.emit('consumer-resume');
           
-          // Set state to indicate remote video is ready
+          // Set state to indicate remote video is ready and store the stream
           setRemoteVideoReady(true);
+          setRemoteStream(stream);
+          
           console.log('Consumer created and stream ready');
           
           setLoading(false);
@@ -456,14 +484,38 @@ const LiveClass = () => {
   // Handle manual play for remote video
   const handlePlayRemoteVideo = () => {
     if (remoteVideoRef.current && remoteVideoRef.current.srcObject) {
-      remoteVideoRef.current.play()
-        .then(() => {
-          console.log('Remote video playing successfully');
-        })
-        .catch((err) => {
-          console.error('Manual play error:', err);
-          setError(`Manual play error: ${err.message}. Please try clicking again.`);
-        });
+      console.log('Attempting manual play with stream:', remoteVideoRef.current.srcObject);
+      console.log('Stream tracks:', remoteVideoRef.current.srcObject.getTracks());
+      
+      // Force browser to notice there's video content
+      remoteVideoRef.current.style.display = 'none';
+      setTimeout(() => {
+        remoteVideoRef.current.style.display = 'block';
+        
+        // Try playing with a small delay to ensure UI has updated
+        setTimeout(() => {
+          remoteVideoRef.current.play()
+            .then(() => {
+              console.log('Remote video playing successfully');
+            })
+            .catch((err) => {
+              console.error('Manual play error:', err);
+              setError(`Manual play error: ${err.message}. Please try clicking again.`);
+              
+              // Attempt one more time after user interaction
+              const handleUserInteraction = () => {
+                remoteVideoRef.current.play()
+                  .then(() => {
+                    document.removeEventListener('click', handleUserInteraction);
+                    console.log('Video playing after user interaction');
+                  })
+                  .catch(e => console.error('Still failed to play:', e));
+              };
+              
+              document.addEventListener('click', handleUserInteraction, { once: true });
+            });
+        }, 100);
+      }, 100);
     } else {
       setError('No video stream available. Please complete steps 6 and 7 first.');
     }
@@ -505,13 +557,31 @@ const LiveClass = () => {
                 className="remote-video"
                 playsInline 
                 autoPlay
+                controls
                 onClick={handlePlayRemoteVideo}
-                style={{ cursor: 'pointer', width: '100%', height: 'auto' }}
+                style={{ 
+                  cursor: 'pointer', 
+                  width: '100%', 
+                  height: 'auto',
+                  backgroundColor: '#333', // Dark background to see video better
+                  border: '1px solid #666',
+                  minHeight: '200px' // Ensure a visible area even without video
+                }}
               />
               <div className="play-indicator">
                 <button 
                   onClick={handlePlayRemoteVideo}
                   className="play-button"
+                  style={{
+                    padding: '10px 15px',
+                    fontSize: '16px',
+                    margin: '10px 0',
+                    cursor: 'pointer',
+                    backgroundColor: '#4caf50',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px'
+                  }}
                 >
                   Play Remote Video
                 </button>
