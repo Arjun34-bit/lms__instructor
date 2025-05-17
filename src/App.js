@@ -19,6 +19,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import PhoneRegister from "./components/phoneNoRegisterLogin/PhoneRegister";
 import PhoneLogin from "./components/phoneNoRegisterLogin/PhoneLogin";
 import LiveClass from "./components/liveclass/LiveClass";
+import LiveClassViewer from "./components/liveclass/LiveClassViewer";
 // import PhoneLogin from "./components/login/PhoneLogin";
 
 const apiUrl = process.env.REACT_APP_API_URL;

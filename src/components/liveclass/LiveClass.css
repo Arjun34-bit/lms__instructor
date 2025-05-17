@@ -33,3 +33,8 @@
 .button:hover {
   background-color: #2563eb;
 }
+.status {
+  margin-bottom: 16px;
+  font-size: 18px;
+  color: #374151;
+}
