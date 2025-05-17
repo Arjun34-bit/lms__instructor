@@ -50,6 +50,7 @@ function App() {
             <Route path="/reels" element={<Reels />} />
             {/* <Route path="/liveclasses/:classId" element={<ClassRoom />} /> */}
             <Route path="/live-class-room" element={<LiveClass />} />
+            <Route path="/liveclass-viewer" element={<LiveClassViewer />} />
           </Route>
           <Route path="*" element={<PageNotFound />} />
         </Routes>
