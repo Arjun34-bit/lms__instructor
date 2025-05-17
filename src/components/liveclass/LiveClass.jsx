@@ -18,7 +18,7 @@ function LiveClass() {
 
   useEffect(() => {
     console.log("Initializing Socket.IO connection");
-    const socket = io("http://localhost:4000/mediasoup");
+    const socket = io("http://localhost:8287/mediasoup");
     setSocket(socket);
     console.log("Socket.IO instance created:", socket);
     socket.on("connection-success", (data) => {
