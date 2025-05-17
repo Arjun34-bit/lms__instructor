@@ -335,54 +335,99 @@ const LiveClass = () => {
     });
   };
   
-  
   const handleCreateRecvTransport = () => {
     setLoading(true);
     setError('');
-    
+  
     if (!deviceRef.current || !deviceRef.current.loaded) {
       const errorMsg = "Device not created. Please complete steps 1-5 first.";
       setError(errorMsg);
       setLoading(false);
       return;
     }
-    
+  
     socketRef.current.emit('createWebRtcTransport', { sender: false });
   
-    socketRef.current.once('createWebRtcTransport', ({ params, error }) => {
+    socketRef.current.once('createWebRtcTransport', async ({ params, error }) => {
       if (error) {
-        console.log(error);
-        setError(`Receive transport error: ${error}`);
+        setError(`Receive transport creation error: ${error}`);
         setLoading(false);
         return;
       }
   
-      console.log('Receive transport params:', params);
-      
-      // Create the receive transport
-      consumerTransportRef.current = deviceRef.current.createRecvTransport(params);
-      
-      // Set up transport connection listeners
-      consumerTransportRef.current.on('connect', ({ dtlsParameters }, callback, errback) => {
+      const recvTransport = deviceRef.current.createRecvTransport(params);
+      consumerTransportRef.current = recvTransport;
+  
+      recvTransport.on('connect', ({ dtlsParameters }, callback, errback) => {
         socketRef.current.emit('transport-connect', {
-          transportId: consumerTransportRef.current.id,
-          dtlsParameters
+          transportId: recvTransport.id,
+          dtlsParameters,
         });
-        
+  
         socketRef.current.once('transport-connect-response', (response) => {
           if (response.success) {
             callback();
           } else {
-            setError(`Consumer transport connect error: ${response.error || 'Unknown error'}`);
-            errback(new Error(response.error || 'Failed to connect transport'));
+            const errMsg = response.error || "Recv transport connect failed";
+            setError(errMsg);
+            errback(new Error(errMsg));
           }
         });
       });
-      
-      console.log('Consumer transport created:', consumerTransportRef.current.id);
-      setLoading(false);
+  
+      socketRef.current.emit('consume', {
+        rtpCapabilities: deviceRef.current.rtpCapabilities,
+      });
+  
+      socketRef.current.once('consume', async ({ id, producerId, kind, rtpParameters, error }) => {
+        if (error) {
+          setError(`Consume error: ${error}`);
+          setLoading(false);
+          return;
+        }
+  
+        const consumer = await recvTransport.consume({
+          id,
+          producerId,
+          kind,
+          rtpParameters,
+        });
+  
+        consumerRef.current = consumer;
+  
+        const stream = new MediaStream();
+        stream.addTrack(consumer.track);
+        setRemoteStream(stream);
+        setRemoteVideoReady(true);
+  
+        setLoading(false);
+  
+        // Resume the consumer on the server
+        socketRef.current.emit('consumer-resume', { consumerId: consumer.id });
+      });
     });
   };
+  useEffect(() => {
+    if (remoteVideoRef.current && remoteStream) {
+      remoteVideoRef.current.srcObject = remoteStream;
+
+      console.log("🎥 Assigning remote stream to video element");
+      console.log("🔍 Remote Stream:", remoteStream);
+      console.log("📦 Video Tracks:", remoteStream.getVideoTracks());
+
+      remoteVideoRef.current.onloadedmetadata = () => {
+        remoteVideoRef.current.play()
+          .then(() => {
+            console.log("✅ Video is playing");
+          })
+          .catch((err) => {
+            console.error("❌ Error playing video:", err);
+          });
+      };
+    } else {
+      console.warn("⚠️ remoteVideoRef or remoteStream is missing");
+    }
+  }, [remoteStream]);  
 
   const handleConnectRecvTransportAndConsume = () => {
     setLoading(true);
@@ -427,57 +472,45 @@ const LiveClass = () => {
           setLoading(false);
           return;
         }
-        
-        console.log('Consume response:', response);
-        
+      
         try {
-          // Create consumer
           const consumer = await consumerTransportRef.current.consume({
             id: response.id,
             producerId: response.producerId,
             kind: response.kind,
-            rtpParameters: response.rtpParameters
+            rtpParameters: response.rtpParameters,
           });
-          
-          consumerRef.current = consumer;
-          
-          // Debug the consumer track state
-          console.log('Consumer track info:', {
-            kind: consumer.track.kind,
-            enabled: consumer.track.enabled,
-            readyState: consumer.track.readyState,
-            muted: consumer.track.muted
-          });
-          
-          // Create a new MediaStream from the consumer's track
+      
           const stream = new MediaStream();
           stream.addTrack(consumer.track);
-          
-          // Debug the created stream
-          console.log('Created MediaStream with tracks:', 
-            stream.getTracks().map(t => ({
-              kind: t.kind,
-              enabled: t.enabled,
-              readyState: t.readyState
-            }))
-          );
-          
-          // Resume the consumer to start receiving media
-          socketRef.current.emit('consumer-resume');
-          
-          // Set state to indicate remote video is ready and store the stream
+      
+          setRemoteStream(stream); // Effect will set video.srcObject
+      
+          await consumer.resume();
+      
+          consumerRef.current = consumer;
+      
+          consumer.on('transportclose', () => {
+            console.warn('Consumer transport closed');
+          });
+      
+          consumer.on('producerclose', () => {
+            console.warn('Producer closed the track');
+            setRemoteStream(null);
+          });
+      
           setRemoteVideoReady(true);
-          setRemoteStream(stream);
-          
-          console.log('Consumer created and stream ready');
-          
           setLoading(false);
-        } catch (err) {
-          console.error('Consumer creation failed:', err);
-          setError(`Consumer creation failed: ${err.message}`);
+      
+        } catch (error) {
+          console.error('Consume failed:', error);
+          setError(`Consume failed: ${error.message}`);
           setLoading(false);
         }
       });
+      
+
+
     });
   };
   
@@ -520,6 +553,23 @@ const LiveClass = () => {
       setError('No video stream available. Please complete steps 6 and 7 first.');
     }
   };
+
+  useEffect(() => {
+    if (remoteVideoRef.current && remoteStream) {
+      remoteVideoRef.current.srcObject = remoteStream;
+  
+      const playPromise = remoteVideoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            console.log("Remote video playing");
+          })
+          .catch((error) => {
+            console.error("Auto-play failed:", error);
+          });
+      }
+    }
+  }, [remoteStream]);
 
   return (
     <div className="liveclass-container">
