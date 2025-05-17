@@ -4,12 +4,14 @@ import { Device } from "mediasoup-client";
 import "./LiveClass.css";
 
 function LiveClassViewer() {
-  const videoRef = useRef(null);
+  const cameraVideoRef = useRef(null);
+  const screenVideoRef = useRef(null);
   const [device, setDevice] = useState(null);
   const [socket, setSocket] = useState(null);
   const [rtpCapabilities, setRtpCapabilities] = useState(null);
   const [consumerTransport, setConsumerTransport] = useState(null);
   const [status, setStatus] = useState("Waiting for broadcaster...");
+  const [consumers, setConsumers] = useState({ camera: null, audio: null, screen: null });
 
   useEffect(() => {
     console.log("Initializing Socket.IO connection");
@@ -22,9 +24,17 @@ function LiveClassViewer() {
     socket.on("broadcasterDisconnected", () => {
       console.log("Received broadcasterDisconnected");
       setStatus("Broadcaster disconnected");
-      if (videoRef.current) {
-        videoRef.current.srcObject = null;
+      if (cameraVideoRef.current) {
+        cameraVideoRef.current.srcObject = null;
       }
+      if (screenVideoRef.current) {
+        screenVideoRef.current.srcObject = null;
+      }
+      setConsumers({ camera: null, audio: null, screen: null });
+    });
+    socket.on("connect_error", (error) => {
+      console.error("Socket.IO connect error:", error);
+      setStatus("Connection error");
     });
     return () => {
       console.log("Disconnecting Socket.IO");
@@ -37,7 +47,6 @@ function LiveClassViewer() {
     socket.emit("getRouterRtpCapabilities", (data) => {
       console.log("Received routerRtpCapabilities:", data);
       setRtpCapabilities(data.routerRtpCapabilities);
-      console.log("Set rtpCapabilities state:", data.routerRtpCapabilities);
     });
   };
 
@@ -52,13 +61,15 @@ function LiveClassViewer() {
       const newDevice = new Device();
       await newDevice.load({ routerRtpCapabilities: rtpCapabilities });
       console.log("Device loaded successfully:", newDevice);
+      console.log("Device RTP capabilities:", newDevice.rtpCapabilities);
       setDevice(newDevice);
-      console.log("Set device state:", newDevice);
     } catch (error) {
       console.error("Error creating device:", error);
       if (error.name === "UnsupportedError") {
         console.error("Browser not supported");
       }
+      setStatus("Error creating device");
+      alert("Failed to create device");
     }
   };
 
@@ -73,28 +84,29 @@ function LiveClassViewer() {
       console.log("Received createTransport response for receiver:", params);
       if (params.error) {
         console.error("Error in createTransport:", params.error);
+        setStatus("Error creating transport");
+        alert("Failed to create transport");
         return;
       }
       const transport = device?.createRecvTransport(params);
       console.log("Created receive transport:", transport);
       setConsumerTransport(transport);
-      console.log("Set consumerTransport state:", transport);
       transport?.on("connect", ({ dtlsParameters }, callback, errback) => {
         console.log("Receive transport connect event, dtlsParameters:", dtlsParameters);
         try {
           socket.emit("connectConsumerTransport", { dtlsParameters });
           console.log("Emitted connectConsumerTransport");
           callback();
-          console.log("Called connect callback");
         } catch (error) {
           console.error("Error in connectConsumerTransport:", error);
           errback(error);
+          setStatus("Error connecting transport");
         }
       });
     });
   };
 
-  const connectRecvTransport = () => {
+  const connectRecvTransport = async () => {
     if (!consumerTransport) {
       console.log("Cannot connect receive transport: consumerTransport is null");
       alert("Please create a Receive Transport first!");
@@ -109,23 +121,61 @@ function LiveClassViewer() {
         return;
       }
       try {
-        const consumer = await consumerTransport.consume({
-          id: params.id,
-          producerId: params.producerId,
-          kind: params.kind,
-          rtpParameters: params.rtpParameters,
-        });
-        console.log("Created consumer:", consumer);
-        const { track } = consumer;
-        console.log("Consumer track:", track);
-        if (videoRef.current) {
-          videoRef.current.srcObject = new MediaStream([track]);
-          console.log("Attached track to video element");
-          setStatus("Watching broadcaster");
+        const newConsumers = { camera: null, audio: null, screen: null };
+        const producerIds = [];
+        for (const param of params) {
+          const { id, producerId, kind, rtpParameters, label } = param;
+          try {
+            const consumer = await consumerTransport.consume({
+              id,
+              producerId,
+              kind,
+              rtpParameters,
+            });
+            console.log(`Created consumer for ${kind} (${label}):`, consumer);
+            const { track } = consumer;
+            console.log(`Consumer track for ${kind} (${label}):`, track);
+            if (kind === "video" && label === "camera" && cameraVideoRef.current) {
+              const stream = new MediaStream([track]);
+              cameraVideoRef.current.srcObject = stream;
+              cameraVideoRef.current.play().catch(error => {
+                console.error("Error playing camera video:", error);
+                setStatus("Error playing camera video");
+              });
+              newConsumers.camera = consumer;
+            } else if (kind === "video" && label === "screen" && screenVideoRef.current) {
+              const stream = new MediaStream([track]);
+              screenVideoRef.current.srcObject = stream;
+              screenVideoRef.current.play().catch(error => {
+                console.error("Error playing screen video:", error);
+                setStatus("Error playing screen video");
+              });
+              newConsumers.screen = consumer;
+            } else if (kind === "audio") {
+              const stream = cameraVideoRef.current?.srcObject || new MediaStream();
+              stream.addTrack(track);
+              if (cameraVideoRef.current) {
+                cameraVideoRef.current.srcObject = stream;
+                cameraVideoRef.current.play().catch(error => {
+                  console.error("Error playing audio:", error);
+                  setStatus("Error playing audio");
+                });
+              }
+              newConsumers.audio = consumer;
+            }
+            producerIds.push(producerId);
+          } catch (error) {
+            console.error(`Error creating consumer for ${kind} (${label}):`, error);
+            setStatus(`Error creating consumer for ${kind} (${label})`);
+          }
         }
-        socket.emit("resumePausedConsumer", () => {
-          console.log("Emitted resumePausedConsumer");
-        });
+        setConsumers(newConsumers);
+        setStatus(producerIds.length > 0 ? "Watching broadcaster" : "No streams available");
+        if (producerIds.length > 0) {
+          socket.emit("resumePausedConsumers", producerIds, () => {
+            console.log("Emitted resumePausedConsumers for producerIds:", producerIds);
+          });
+        }
       } catch (error) {
         console.error("Error consuming media:", error);
         setStatus("Error consuming media");
@@ -136,7 +186,14 @@ function LiveClassViewer() {
   return (
     <main className="main">
       <div className="video-container">
-        <video ref={videoRef} autoPlay playsInline className="video" />
+        <div className="video-wrapper">
+          <video ref={cameraVideoRef} autoPlay playsInline className="video" />
+          <span className="video-label">Camera</span>
+        </div>
+        <div className="video-wrapper">
+          <video ref={screenVideoRef} autoPlay playsInline className="video" />
+          <span className="video-label">Screen Share</span>
+        </div>
       </div>
       <div className="status">{status}</div>
       <div className="button-container">
