@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchDepartmentsApi } from "../../api/queries/commonQueries";
 import AntdSpinner from "../Spinner/Spinner";
 import { Divider } from "antd";
+import PhoneInput from "react-phone-input-2";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -35,11 +36,13 @@ const Register = () => {
       name: "",
       email: "",
       password: "",
+      phoneNumber: "",
     },
   });
 
   const onRegisterSubmit = async (data) => {
     try {
+      console.log(data);
       const registerResponse = await authRegisterApi(data);
       if (registerResponse?.data) {
         setSuccess(
@@ -111,6 +114,26 @@ const Register = () => {
             control={control}
             render={({ field }) => (
               <Input {...field} placeholder="Enter your email" />
+            )}
+          />
+        </Form.Item>
+
+        <Form.Item
+          label="Phoneno*"
+          validateStatus={errors.phoneNumber ? "error" : ""}
+          help={errors.phoneNumber?.message}
+        >
+          <Controller
+            name="phoneNumber"
+            control={control}
+            render={({ field }) => (
+              <PhoneInput
+                country={"in"}
+                {...field}
+                onChange={(value) => field.onChange(`+${value}`)}
+                value={field.value?.replace(/^\+/, "")}
+                inputStyle={{ width: "100%" }}
+              />
             )}
           />
         </Form.Item>
