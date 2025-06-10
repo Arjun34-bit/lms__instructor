@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Button, Form, Input, Alert, Typography, Select } from "antd";
+import React, { useEffect, useState } from "react";
+import { Button, Form, Input, Alert, Typography, Select, Modal } from "antd";
 import { useForm } from "react-hook-form";
 import { Controller } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
@@ -12,10 +12,20 @@ import AntdSpinner from "../Spinner/Spinner";
 import { Divider } from "antd";
 import PhoneInput from "react-phone-input-2";
 
+import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+import { auth } from "../../firebase/config";
+
 const { Title, Text } = Typography;
 const { Option } = Select;
 
 const Register = () => {
+  const [loading, setLoading] = useState(false);
+  const [OTPLoading, setOTPLoading] = useState(false);
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [verificationId, setVerificationId] = useState(null);
+
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const navigate = useNavigate();
@@ -40,9 +50,86 @@ const Register = () => {
     },
   });
 
+  const handlePhoneVerification = async (phoneNumber) => {
+    try {
+      // Validate all required fields
+      if (!phoneNumber) {
+        setError("Please enter mobile number");
+        return;
+      }
+
+      setLoading(true);
+      if (!window.recaptchaVerifier) {
+        window.recaptchaVerifier = new RecaptchaVerifier(
+          auth,
+          "recaptcha-container",
+          { size: "invisible" }
+        );
+
+        await window.recaptchaVerifier.render();
+      }
+
+      const formattedPhone = phoneNumber.startsWith("+")
+        ? phoneNumber
+        : `+${phoneNumber}`;
+      const reCAPTCHA = window.recaptchaVerifier;
+      const confirmationResult = await signInWithPhoneNumber(
+        auth,
+        formattedPhone,
+        reCAPTCHA
+      );
+
+      setVerificationId(confirmationResult);
+      setShowOtpModal(true);
+      setError("");
+      setSuccess("OTP sent successfully");
+    } catch (error) {
+      console.log(error);
+      setError("Failed to send OTP. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (window.recaptchaVerifier) {
+        try {
+          window.recaptchaVerifier.clear();
+        } catch (e) {}
+        window.recaptchaVerifier = null;
+      }
+    };
+  }, []);
+
+  const handleOtpSubmit = async () => {
+    try {
+      setOTPLoading(true);
+      const credential = await verificationId.confirm(otp);
+      const idToken = await credential.user.getIdToken();
+
+      setSuccess("Phone Number Verified");
+      setIsPhoneVerified(true);
+    } catch (error) {
+      setSuccess("");
+      setError(
+        error?.response?.data?.message ||
+          "OTP Verification Failed. Please try again."
+      );
+    } finally {
+      setOTPLoading(false);
+      setShowOtpModal(false);
+    }
+  };
+
   const onRegisterSubmit = async (data) => {
     try {
-      console.log(data);
+      if (!isPhoneVerified) {
+        setError("Please verify your phone number");
+        return;
+      }
+      setLoading(true);
+      data.idToken = await auth.currentUser.getIdToken();
       const registerResponse = await authRegisterApi(data);
       if (registerResponse?.data) {
         setSuccess(
@@ -77,6 +164,7 @@ const Register = () => {
         height: "100vh",
       }}
     >
+      <div id="recaptcha-container" />
       <Title level={2}>Instructor Register</Title>
       <Text type="secondary">Create an account</Text>
       {error && (
@@ -126,15 +214,30 @@ const Register = () => {
           <Controller
             name="phoneNumber"
             control={control}
-            render={({ field }) => (
-              <PhoneInput
-                country={"in"}
-                {...field}
-                onChange={(value) => field.onChange(`+${value}`)}
-                value={field.value?.replace(/^\+/, "")}
-                inputStyle={{ width: "100%" }}
-              />
-            )}
+            render={({ field }) => {
+              const cleanedValue = field.value?.replace(/^\+/, "");
+              return (
+                <div style={{ display: "flex", gap: 8 }}>
+                  <PhoneInput
+                    country={"in"}
+                    {...field}
+                    onChange={(value) => field.onChange(`+${value}`)}
+                    value={cleanedValue}
+                    inputStyle={{ width: "100%" }}
+                    containerStyle={{ flex: 1 }}
+                  />
+                  {cleanedValue && cleanedValue.length >= 12 && (
+                    <Button
+                      type="primary"
+                      onClick={() => handlePhoneVerification(field?.value)}
+                      loading={loading}
+                    >
+                      Verify
+                    </Button>
+                  )}
+                </div>
+              );
+            }}
           />
         </Form.Item>
 
@@ -190,6 +293,22 @@ const Register = () => {
           </div>
         </div>
       </Form>
+      <Modal
+        title="Enter OTP"
+        open={showOtpModal}
+        onOk={handleOtpSubmit}
+        onCancel={() => setShowOtpModal(false)}
+        confirmLoading={OTPLoading}
+        okText="Verify "
+      >
+        <Input
+          placeholder="Enter OTP"
+          value={otp}
+          onChange={(e) => setOtp(e.target.value)}
+          style={{ marginTop: "20px" }}
+        />
+      </Modal>
+      ;
     </div>
   );
 };
