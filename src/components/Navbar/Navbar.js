@@ -4,6 +4,8 @@ import { Button, Dropdown } from "react-bootstrap";
 import { FaBook, FaUsers, FaFilm, FaChartBar, FaBell } from "react-icons/fa";
 import TidioChat from "./TidioChat";
 import { getLocalStorageUser } from "../../utils/localStorageUtils";
+import { signOut } from "firebase/auth";
+import { auth } from "../../config/firebaseConfig";
 
 function NavbarAndSideMenu() {
   const [userData, setUserData] = useState(null);
@@ -11,13 +13,18 @@ function NavbarAndSideMenu() {
 
   useEffect(() => {
     const user = getLocalStorageUser();
-    setUserData({...user});
+    setUserData({ ...user });
   }, []);
 
-  const handleLogout = () => {
-    localStorage.clear();
-    return navigate('/login')
-  }
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      localStorage.clear();
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
 
   return (
     <div className="d-flex">

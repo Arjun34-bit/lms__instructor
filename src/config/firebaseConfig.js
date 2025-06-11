@@ -26,6 +26,9 @@ const auth = getAuth(app);
 export const signInWithGoogle = async () => {
   try {
     const googleProvider = new GoogleAuthProvider();
+    googleProvider.setCustomParameters({
+      prompt: "select_account",
+    });
     const result = await signInWithPopup(auth, googleProvider);
     return result.user; // Returns user details
   } catch (error) {

@@ -8,18 +8,17 @@ import { useQuery } from "@tanstack/react-query";
 
 const ProtectedRoute = ({ children }) => {
   const { classId } = useParams();
-  const {
-    data: userProfileData,
-    isLoading: userProfileDataLoading,
-  } = useQuery({
-    queryKey: ["userProfileData"],
-    queryFn: () => fetchUserProfileData(),
-    keepPreviousData: true,
-  });
+  const { data: userProfileData, isLoading: userProfileDataLoading } = useQuery(
+    {
+      queryKey: ["userProfileData"],
+      queryFn: () => fetchUserProfileData(),
+      keepPreviousData: true,
+    }
+  );
 
   useEffect(() => {
-    if(userProfileData) {
-      setLocalStorageUser(userProfileData?.data);
+    if (userProfileData) {
+      // setLocalStorageUser(userProfileData?.data);
     }
   }, [userProfileData]);
 
@@ -30,10 +29,10 @@ const ProtectedRoute = ({ children }) => {
 
   return (
     <>
-      {(!classId) && <NavbarAndSideMenu />}
+      {!classId && <NavbarAndSideMenu />}
       <Outlet />
     </>
   );
-}
+};
 
 export default ProtectedRoute;

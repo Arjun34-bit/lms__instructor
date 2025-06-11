@@ -16,6 +16,7 @@ import { Controller } from "react-hook-form";
 import {
   signInWithGoogle,
   signInWithFacebook,
+  auth,
 } from "../../config/firebaseConfig";
 import { authLoginApi, googleSigninApi } from "../../api/queries/authQueries";
 import {
@@ -24,6 +25,7 @@ import {
 } from "../../utils/localStorageUtils";
 import { Link, useNavigate } from "react-router-dom";
 import { loginSchema } from "./schema/loginSchema";
+import { signOut } from "firebase/auth";
 const { Title, Text } = Typography;
 
 const Login = () => {
@@ -56,14 +58,19 @@ const Login = () => {
     } catch (error) {
       setError(
         error?.response?.data?.message ||
-        error?.message ||
-        "Google Sign-In Failed. Try again."
+          error?.message ||
+          "Google Sign-In Failed. Try again."
       );
     }
   };
 
+  let signingIn = false;
+
   const handleGoogleSignIn = async () => {
+    if (signingIn) return;
+    signingIn = true;
     try {
+      await signOut(auth);
       const userCredential = await signInWithGoogle();
       const idToken = await userCredential.getIdToken();
       const loginResponse = await googleSigninApi(idToken);
@@ -181,9 +188,8 @@ const Login = () => {
           icon={<FaFacebook size={20} />}
           onClick={handleFacebookSignIn}
         />
-
       </div>
-      <div style={{ marginTop:"10px"}}>
+      <div style={{ marginTop: "10px" }}>
         <Link to="/login-phone">
           <Button block>Login with Phone Number</Button>
         </Link>
