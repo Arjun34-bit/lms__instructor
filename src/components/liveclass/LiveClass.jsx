@@ -8,6 +8,8 @@ import { MdScreenShare, MdStopScreenShare } from "react-icons/md";
 import { MdDraw } from "react-icons/md";
 import { BsCameraVideoFill, BsCameraVideoOffFill } from "react-icons/bs";
 import { BiSolidMicrophone, BiSolidMicrophoneOff } from "react-icons/bi";
+import ConsumerBox from "./ConsumerBox";
+import { useParams } from "react-router-dom";
 
 function LiveClass() {
   const initializedRef = useRef(false);
@@ -29,12 +31,16 @@ function LiveClass() {
     canvas: null,
   });
 
+  const [remoteProducers, setRemoteProducers] = useState([]);
+
   const [canvasStream, setCanvasStream] = useState(null);
 
   const [toggleCamera, setToggleCamera] = useState(false);
   const [toggleAudio, setToggleAudio] = useState(false);
   const [screenShare, setScreenShare] = useState(false);
   const [toggleBoard, setToggleBoard] = useState(false);
+
+  const { classId } = useParams();
 
   useEffect(() => {
     console.log("Initializing Socket.IO connection");
@@ -43,22 +49,62 @@ function LiveClass() {
     console.log("Socket.IO instance created:", socket);
     socket.on("connection-success", (data) => {
       console.log("Received connection-success:", data);
-      socket.emit("setBroadcaster", () => {
-        console.log("Emitted setBroadcaster");
-      });
+      // socket.emit("setBroadcaster", () => {
+      //   console.log("Emitted setBroadcaster");
+      // });
     });
-    socket.on("viewerCount", ({ count }) => {
-      console.log(`Received viewer count: ${count}`);
-      setViewerCount(count);
+    // socket.on("viewerCount", ({ count }) => {
+    //   console.log(`Received viewer count: ${count}`);
+    //   setViewerCount(count);
+    // });
+
+    socket.emit("join-room", { roomId: classId }, (data) => {
+      console.log("Join room response:", data);
+      if (data?.rtpCapabilities) {
+        setRtpCapabilities(data.rtpCapabilities);
+      } else {
+        console.error("Failed to get RTP Capabilities");
+      }
     });
+
+    const handleUserCount = ({ roomId, userCount }) => {
+      console.log("User count updated:", userCount);
+      setViewerCount(userCount);
+    };
+
+    socket.on("room-user-count", handleUserCount);
     socket.on("connect_error", (error) => {
       console.error("Socket.IO connect error:", error);
     });
     return () => {
+      socket.off("room-user-count", handleUserCount);
       console.log("Disconnecting Socket.IO");
       socket.disconnect();
     };
-  }, []);
+  }, [classId]);
+
+  useEffect(() => {
+    console.log("hello");
+    if (!socket) return;
+
+    socket.on("new-producer", async (data) => {
+      console.log("New producer available", data);
+
+      setRemoteProducers((prev) => {
+        const exists = prev.some((p) => p.producerId === data.producerId);
+        if (!exists) {
+          return [...prev, data];
+        }
+        return prev;
+      });
+    });
+
+    console.log("remote producer", remoteProducers);
+
+    return () => {
+      socket.off("new-producer");
+    };
+  }, [socket, classId]);
 
   const startCamera = async () => {
     try {
@@ -79,6 +125,8 @@ function LiveClass() {
           );
       }
       setCameraStream(stream);
+
+      await connectSendTransport("camera", stream);
     } catch (error) {
       console.error("Error accessing camera:", error);
       alert("Failed to access camera");
@@ -106,6 +154,7 @@ function LiveClass() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       console.log("Audio stream acquired:", stream);
       setAudioStream(stream);
+      await connectSendTransport("audio", stream);
     } catch (error) {
       console.error("Error accessing audio:", error);
       alert("Failed to access microphone");
@@ -140,6 +189,7 @@ function LiveClass() {
           );
       }
       setScreenStream(stream);
+      await connectSendTransport("screen", stream);
       stream.getVideoTracks()[0].onended = () => {
         console.log("Screen share ended");
         stopScreenShare();
@@ -169,40 +219,58 @@ function LiveClass() {
     try {
       console.log("Requesting White board access");
       const stream = canvasStream;
-      console.log("White Board stream acquired:", canvasStream);
+      console.log(
+        "White Board stream acquired:",
+        canvasStream.getVideoTracks()
+      );
+      console.log("producers.canvas", producers.canvas);
 
-      //  setScreenStream(stream);
-      // stream.getVideoTracks()[0].onended = () => {
-      //   console.log("Screen share ended");
-      // };
+      await connectSendTransport("canvas", stream);
     } catch (error) {
       console.error("Error accessing white board:", error);
       alert("Failed to start white board");
     }
   };
 
+  const getRouterRtpCapabilities = async () => {
+    // console.log("Emitting getRouterRtpCapabilities");
+    // socket.emit("getRouterRtpCapabilities", { roomId: classId }, (data) => {
+    //   console.log("Received routerRtpCapabilities:", data);
+    //   setRtpCapabilities(data.routerRtpCapabilities);
+    //   return data?.routerRtpCapabilities;
+    // });
+
+    console.log("Emitting getRouterRtpCapabilities");
+
+    const data = await new Promise((resolve) => {
+      socket.emit(
+        "getRouterRtpCapabilities",
+        { roomId: classId },
+        (response) => {
+          resolve(response);
+        }
+      );
+    });
+
+    console.log("Received routerRtpCapabilities:", data);
+    setRtpCapabilities(data.routerRtpCapabilities);
+    return data?.routerRtpCapabilities;
+  };
+
   // const getRouterRtpCapabilities = () => {
-  //   console.log("Emitting getRouterRtpCapabilities");
-  //   socket.emit("getRouterRtpCapabilities", (data) => {
-  //     console.log("Received routerRtpCapabilities:", data);
-  //     setRtpCapabilities(data.routerRtpCapabilities);
+  //   return new Promise((resolve, reject) => {
+  //     if (!socket) return reject("Socket not initialized");
+  //     socket.emit("getRouterRtpCapabilities", { roomId: classId }, (data) => {
+  //       if (data?.routerRtpCapabilities) {
+  //         setRtpCapabilities(data.routerRtpCapabilities);
+
+  //         resolve(data.routerRtpCapabilities);
+  //       } else {
+  //         reject("No RTP capabilities received");
+  //       }
+  //     });
   //   });
   // };
-
-  const getRouterRtpCapabilities = () => {
-    return new Promise((resolve, reject) => {
-      if (!socket) return reject("Socket not initialized");
-      socket.emit("getRouterRtpCapabilities", (data) => {
-        if (data?.routerRtpCapabilities) {
-          setRtpCapabilities(data.routerRtpCapabilities);
-
-          resolve(data.routerRtpCapabilities);
-        } else {
-          reject("No RTP capabilities received");
-        }
-      });
-    });
-  };
 
   const createDevice = async (rtpCapabilities) => {
     if (!rtpCapabilities) {
@@ -219,6 +287,8 @@ function LiveClass() {
       await newDevice.load({ routerRtpCapabilities: rtpCapabilities });
       console.log("Device loaded successfully:", newDevice);
       setDevice(newDevice);
+
+      return newDevice;
     } catch (error) {
       console.error("Error creating device:", error);
       if (error.name === "UnsupportedError") {
@@ -228,103 +298,118 @@ function LiveClass() {
     }
   };
 
+  const createSendTransport = async (device) => {
+    if (!device) {
+      console.log("Cannot create send transport: device is null");
+      alert("Please create a Device first!");
+      return;
+    }
+    console.log("Emitting createTransport for sender");
+    socket.emit(
+      "createTransport",
+      { roomId: classId, sender: true },
+      ({ params }) => {
+        console.log("Received createTransport response:", params);
+        if (params.error) {
+          console.error("Error in createTransport:", params.error);
+          alert("Failed to create transport");
+          return;
+        }
+        const transport = device.createSendTransport(params);
+        console.log("Created send transport:", transport);
+        setProducerTransport(transport);
+        console.log("producerTrasnport", producerTransport);
+        transport.on("connect", ({ dtlsParameters }, callback, errback) => {
+          console.log(
+            "Send transport connect event, dtlsParameters:",
+            dtlsParameters
+          );
+          try {
+            socket.emit("connectProducerTransport", {
+              roomId: classId,
+              dtlsParameters,
+            });
+            console.log("Emitted connectProducerTransport");
+            callback();
+          } catch (error) {
+            console.error("Error in connectProducerTransport:", error);
+            errback(error);
+          }
+        });
+        transport.on(
+          "produce",
+          ({ roomId, kind, rtpParameters, appData }, callback, errback) => {
+            console.log("Send transport produce event, parameters:", {
+              roomId,
+              kind,
+              rtpParameters,
+              appData,
+            });
+            try {
+              socket.emit(
+                "transport-produce",
+                {
+                  roomId: classId,
+                  kind,
+                  rtpParameters,
+                  label: appData.label || "",
+                },
+                ({ id }) => {
+                  console.log(
+                    "Received transport-produce response, producer ID:",
+                    id
+                  );
+                  callback({ id });
+                }
+              );
+            } catch (error) {
+              console.error("Error in transport-produce:", error);
+              errback(error);
+            }
+          }
+        );
+      }
+    );
+  };
+
   // const createSendTransport = () => {
-  //   if (!device) {
-  //     console.log("Cannot create send transport: device is null");
-  //     alert("Please create a Device first!");
-  //     return;
-  //   }
-  //   console.log("Emitting createTransport for sender");
-  //   socket.emit("createTransport", { sender: true }, ({ params }) => {
-  //     console.log("Received createTransport response:", params);
-  //     if (params.error) {
-  //       console.error("Error in createTransport:", params.error);
-  //       alert("Failed to create transport");
-  //       return;
-  //     }
-  //     const transport = device?.createSendTransport(params);
-  //     console.log("Created send transport:", transport);
-  //     setProducerTransport(transport);
-  //     transport?.on("connect", ({ dtlsParameters }, callback, errback) => {
-  //       console.log(
-  //         "Send transport connect event, dtlsParameters:",
-  //         dtlsParameters
-  //       );
-  //       try {
-  //         socket.emit("connectProducerTransport", { dtlsParameters });
-  //         console.log("Emitted connectProducerTransport");
-  //         callback();
-  //       } catch (error) {
-  //         console.error("Error in connectProducerTransport:", error);
-  //         errback(error);
-  //       }
-  //     });
-  //     transport?.on(
-  //       "produce",
-  //       ({ kind, rtpParameters, appData }, callback, errback) => {
-  //         console.log("Send transport produce event, parameters:", {
-  //           kind,
-  //           rtpParameters,
-  //           appData,
+  //   console.log("create send transport called");
+  //   return new Promise((resolve, reject) => {
+  //     if (!device || !socket) return reject("Device or socket not ready");
+  //     socket.emit("createTransport", { sender: true }, ({ params }) => {
+  //       if (params?.error) return reject(params.error);
+  //       const transport = device.createSendTransport(params);
+  //       setProducerTransport(transport);
+
+  //       console.log(producerTransport);
+
+  //       transport.on("connect", ({ dtlsParameters }, callback, errback) => {
+  //         socket.emit("connectProducerTransport", { dtlsParameters }, () => {
+  //           callback();
   //         });
-  //         try {
+  //       });
+
+  //       transport.on(
+  //         "produce",
+  //         ({ kind, rtpParameters, appData }, callback) => {
   //           socket.emit(
   //             "transport-produce",
-  //             { kind, rtpParameters, label: appData.label || "" },
-  //             ({ id }) => {
-  //               console.log(
-  //                 "Received transport-produce response, producer ID:",
-  //                 id
-  //               );
-  //               callback({ id });
-  //             }
+  //             {
+  //               kind,
+  //               rtpParameters,
+  //               label: appData.label || "",
+  //             },
+  //             ({ id }) => callback({ id })
   //           );
-  //         } catch (error) {
-  //           console.error("Error in transport-produce:", error);
-  //           errback(error);
   //         }
-  //       }
-  //     );
+  //       );
+
+  //       resolve(transport);
+  //     });
   //   });
   // };
 
-  const createSendTransport = () => {
-    return new Promise((resolve, reject) => {
-      if (!device || !socket) return reject("Device or socket not ready");
-      socket.emit("createTransport", { sender: true }, ({ params }) => {
-        if (params?.error) return reject(params.error);
-        const transport = device.createSendTransport(params);
-        setProducerTransport(transport);
-
-        transport.on("connect", ({ dtlsParameters }, callback, errback) => {
-          socket.emit("connectProducerTransport", { dtlsParameters }, () => {
-            callback();
-          });
-        });
-
-        transport.on(
-          "produce",
-          ({ kind, rtpParameters, appData }, callback) => {
-            socket.emit(
-              "transport-produce",
-              {
-                kind,
-                rtpParameters,
-                label: appData.label || "",
-              },
-              ({ id }) => callback({ id })
-            );
-          }
-        );
-
-        resolve(transport);
-      });
-    });
-
-    connectSendTransport();
-  };
-
-  const connectSendTransport = async () => {
+  const connectSendTransport = async (type, stream) => {
     if (!producerTransport) {
       console.log("Cannot connect send transport: producerTransport is null");
       alert("Please create a Send Transport first!");
@@ -332,8 +417,8 @@ function LiveClass() {
     }
     try {
       // Camera Video Producer
-      if (cameraStream && !producers.camera) {
-        const videoTracks = cameraStream.getVideoTracks();
+      if (type === "camera" && stream && !producers.camera) {
+        const videoTracks = stream.getVideoTracks();
         if (videoTracks.length === 0) {
           console.error("No video tracks available in camera stream");
           alert("Camera stream has no video tracks");
@@ -363,8 +448,8 @@ function LiveClass() {
       }
 
       // Audio Producer
-      if (audioStream && !producers.audio) {
-        const audioTrack = audioStream.getAudioTracks()[0];
+      if (type === "audio" && stream && !producers.audio) {
+        const audioTrack = stream.getAudioTracks()[0];
         console.log("Producing audio track:", audioTrack);
         const audioProducer = await producerTransport.produce({
           track: audioTrack,
@@ -382,8 +467,8 @@ function LiveClass() {
       }
 
       // Screen Share Producer
-      if (screenStream && !producers.screen) {
-        const screenTrack = screenStream.getVideoTracks()[0];
+      if (type === "screen" && stream && !producers.screen) {
+        const screenTrack = stream.getVideoTracks()[0];
         console.log("Producing screen share track:", screenTrack);
         const screenProducer = await producerTransport.produce({
           track: screenTrack,
@@ -407,8 +492,9 @@ function LiveClass() {
       }
 
       //Board Stream  Streaming Canvas as Video. So on Consumer Side we can use video tag as well as canvas(for realtime draw between intructor and students) tag
-      if (canvasStream && !producers.canvas) {
-        const canvasTrack = canvasStream.getVideoTracks()[0];
+      if (type === "canvas" && stream && !producers.canvas) {
+        console.log("Hello from canvas");
+        const canvasTrack = stream.getVideoTracks()[0];
         console.log("Producing canvas (whiteboard) track:", canvasTrack);
         const canvasProducer = await producerTransport.produce({
           track: canvasTrack,
@@ -449,12 +535,12 @@ function LiveClass() {
     screenShare ? stopScreenShare() : startScreenShare();
   };
 
-  const handleDraw = () => {
+  const handleDraw = async () => {
     if (screenShare) {
       alert("Screen Sharing Stopped");
     }
     setScreenShare(false);
-    startBoard();
+    await startBoard();
     setToggleBoard(!toggleBoard);
   };
 
@@ -463,8 +549,8 @@ function LiveClass() {
   const startLiveClass = async () => {
     try {
       const rtpCapabilities = await getRouterRtpCapabilities();
-      await createDevice(rtpCapabilities);
-      await createSendTransport();
+      const dev = await createDevice(rtpCapabilities);
+      await createSendTransport(dev);
     } catch (err) {
       console.error("Initialization error:", err);
     }
@@ -481,7 +567,7 @@ function LiveClass() {
     <main className="main">
       <div className="video-container">
         <div className="nav-content">
-          <div>RoomId</div>
+          <div>RoomId : {classId}</div>
           <div className="nav-btns">
             <button className="n-btns" onClick={handleCamera}>
               {toggleCamera ? (
@@ -518,8 +604,9 @@ function LiveClass() {
             <>
               <WhiteBoard
                 className="screen"
-                onCanvasReadyStream={(stream) => {
+                onCanvasReadyStream={async (stream) => {
                   setCanvasStream(stream);
+                  await connectSendTransport("canvas", stream);
                 }}
               />
               <span className="video-label">Board</span>
@@ -544,7 +631,7 @@ function LiveClass() {
           <WhiteBoard />
         </div> */}
       </div>
-      <div className="status">Viewers: {viewerCount}</div>
+      <div className="status">Current Participants: {viewerCount}</div>
       {/* <div className="button-container">
         <button
           onClick={startCamera}
@@ -597,6 +684,19 @@ function LiveClass() {
           Connect Send Transport
         </button>
       </div> */}
+
+      {/* <div>
+        <ConsumerBox socket={socket} device={device} />
+      </div> */}
+      {remoteProducers.map((producerInfo) => (
+        <ConsumerBox
+          key={producerInfo.producerId}
+          socket={socket}
+          device={device}
+          producerId={producerInfo.producerId}
+          roomId={producerInfo.roomId}
+        />
+      ))}
     </main>
   );
 }

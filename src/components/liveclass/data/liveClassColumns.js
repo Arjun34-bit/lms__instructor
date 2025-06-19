@@ -56,7 +56,7 @@ export const getLiveClassColumns = (handleInstructorClassRoomJoin) => [
           <Button
             className="bg-primary text-white px-4"
             // onClick={() => handleInstructorClassRoomJoin(classId)}
-            onClick={() => window.location.href = `/live-class-room`}
+            onClick={() => window.location.href = `/live-class-room/${classId}`}
           >
             Join
           </Button>

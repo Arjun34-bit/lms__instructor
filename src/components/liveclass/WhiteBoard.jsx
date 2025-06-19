@@ -69,12 +69,21 @@ const WhiteBoard = ({ onCanvasReadyStream }) => {
   };
 
   useEffect(() => {
-    if (!canvasRef.current) return;
-    const stream = canvasRef.current.captureStream(15);
-    if (onCanvasReadyStream) {
-      console.log("canvas stream", stream);
-      onCanvasReadyStream(stream);
-    }
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // Defer stream creation until after the canvas is painted
+    const waitAndStream = () => {
+      requestAnimationFrame(() => {
+        const stream = canvas.captureStream(30);
+        if (onCanvasReadyStream) {
+          console.log("Canvas stream captured after paint:", stream);
+          onCanvasReadyStream(stream);
+        }
+      });
+    };
+
+    waitAndStream();
   }, []);
 
   return (
