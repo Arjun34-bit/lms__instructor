@@ -36,6 +36,23 @@
   transform: scale(1);
 }
 
+.end-btn {
+  display: flex;
+  gap: 5px;
+  width: fit-content;
+  padding: 4px 8px;
+  border-radius: 50px;
+  text-align: center;
+  background-color: red;
+  color: white;
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  transform: scale(1);
+}
+
+.end-btn:hover {
+  transform: scale(1.1);
+}
+
 .n-btns:hover {
   transform: scale(1.1);
   background-color: #374151;

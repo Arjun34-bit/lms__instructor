@@ -4,15 +4,19 @@ import { Device } from "mediasoup-client";
 import "./LiveClass.css";
 import WhiteBoard from "./WhiteBoard";
 
-import { MdScreenShare, MdStopScreenShare } from "react-icons/md";
+import { MdCallEnd, MdScreenShare, MdStopScreenShare } from "react-icons/md";
 import { MdDraw } from "react-icons/md";
 import { BsCameraVideoFill, BsCameraVideoOffFill } from "react-icons/bs";
 import { BiSolidMicrophone, BiSolidMicrophoneOff } from "react-icons/bi";
 import ConsumerBox from "./ConsumerBox";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 function LiveClass() {
+  const mediaSoupURL = process.env.REACT_APP_MEDIASOUP_SOCKET_URL;
+
   const initializedRef = useRef(false);
+  const navigate = useNavigate();
 
   const cameraVideoRef = useRef(null);
   const screenVideoRef = useRef(null);
@@ -44,44 +48,60 @@ function LiveClass() {
 
   useEffect(() => {
     console.log("Initializing Socket.IO connection");
-    const socket = io("http://localhost:8287/mediasoup");
+    const socket = io(mediaSoupURL);
     setSocket(socket);
     console.log("Socket.IO instance created:", socket);
     socket.on("connection-success", (data) => {
       console.log("Received connection-success:", data);
-      // socket.emit("setBroadcaster", () => {
-      //   console.log("Emitted setBroadcaster");
-      // });
-    });
-    // socket.on("viewerCount", ({ count }) => {
-    //   console.log(`Received viewer count: ${count}`);
-    //   setViewerCount(count);
-    // });
 
-    socket.emit("join-room", { roomId: classId }, (data) => {
-      console.log("Join room response:", data);
-      if (data?.rtpCapabilities) {
-        setRtpCapabilities(data.rtpCapabilities);
-      } else {
-        console.error("Failed to get RTP Capabilities");
+      socket.emit(
+        "join-instructor",
+        { roomId: classId, role: "instructor" },
+        (data) => {
+          toast.success(data?.message || "Joined the class");
+        }
+      );
+    });
+
+    socket.emit(
+      "join-room",
+      { roomId: classId, userName: "Instructor" },
+      (data) => {
+        console.log("Join room response:", data);
+        if (data?.rtpCapabilities) {
+          setRtpCapabilities(data.rtpCapabilities);
+        } else {
+          console.error("Failed to get RTP Capabilities");
+        }
       }
+    );
+
+    socket.on("user-joined", ({ message, userName }) => {
+      toast.success(message);
+      console.log(`${userName} joined`);
+    });
+
+    socket.on("user-left", ({ message, userName }) => {
+      toast.info(message);
+      console.log(`${userName} left`);
     });
 
     const handleUserCount = ({ roomId, userCount }) => {
       console.log("User count updated:", userCount);
       setViewerCount(userCount);
     };
-
     socket.on("room-user-count", handleUserCount);
     socket.on("connect_error", (error) => {
       console.error("Socket.IO connect error:", error);
     });
     return () => {
       socket.off("room-user-count", handleUserCount);
+      socket.off("user-joined");
+      socket.off("user-left");
       console.log("Disconnecting Socket.IO");
       socket.disconnect();
     };
-  }, [classId]);
+  }, []);
 
   useEffect(() => {
     console.log("hello");
@@ -104,7 +124,18 @@ function LiveClass() {
     return () => {
       socket.off("new-producer");
     };
-  }, [socket, classId]);
+  }, [socket, remoteProducers]);
+
+  const leaveRoom = () => {
+    socket.emit("leave-room", {
+      roomId: classId,
+      userName: "Instructor",
+    });
+
+    setTimeout(() => {
+      navigate("/liveclasses");
+    }, 1500);
+  };
 
   const startCamera = async () => {
     try {
@@ -233,13 +264,6 @@ function LiveClass() {
   };
 
   const getRouterRtpCapabilities = async () => {
-    // console.log("Emitting getRouterRtpCapabilities");
-    // socket.emit("getRouterRtpCapabilities", { roomId: classId }, (data) => {
-    //   console.log("Received routerRtpCapabilities:", data);
-    //   setRtpCapabilities(data.routerRtpCapabilities);
-    //   return data?.routerRtpCapabilities;
-    // });
-
     console.log("Emitting getRouterRtpCapabilities");
 
     const data = await new Promise((resolve) => {
@@ -548,8 +572,9 @@ function LiveClass() {
 
   const startLiveClass = async () => {
     try {
-      const rtpCapabilities = await getRouterRtpCapabilities();
-      const dev = await createDevice(rtpCapabilities);
+      const rtpCapabilities1 = await getRouterRtpCapabilities();
+      console.log("rtpCapabilities", rtpCapabilities);
+      const dev = await createDevice(rtpCapabilities1);
       await createSendTransport(dev);
     } catch (err) {
       console.error("Initialization error:", err);
@@ -596,6 +621,12 @@ function LiveClass() {
               ) : (
                 <MdDraw size={20} />
               )}
+            </button>
+            <button className="end-btn" onClick={leaveRoom}>
+              <span>
+                <MdCallEnd size={20} />
+              </span>
+              <span>Leave</span>
             </button>
           </div>
         </div>
