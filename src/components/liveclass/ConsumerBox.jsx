@@ -49,30 +49,27 @@ const ConsumerBox = ({ socket, device, producerId, roomId }) => {
           producerId,
         },
         async ({ params }) => {
+          console.log("params",params)
           if (!params || params.error) {
             const errMsg = params?.error || "Error during media consumption";
             return reject(new Error(errMsg));
           }
 
-          if (!Array.isArray(params)) {
-            return reject(new Error("Invalid consumer parameters"));
-          }
+          // const streams = [];
 
-          const streams = [];
-
-          for (const consumerParams of params) {
+          try {
             const consumer = await recvTransport.consume({
-              id: consumerParams.id,
-              producerId: consumerParams.producerId,
-              kind: consumerParams.kind,
-              rtpParameters: consumerParams.rtpParameters,
+              id: params.id,
+              producerId: params.producerId,
+              kind: params.kind,
+              rtpParameters: params.rtpParameters,
             });
-
+  
             const stream = new MediaStream([consumer.track]);
-            streams.push({ consumer, stream });
+            resolve([{ consumer, stream }]);
+          } catch (err) {
+            reject(err);
           }
-
-          resolve(streams);
         }
       );
     });
@@ -80,30 +77,48 @@ const ConsumerBox = ({ socket, device, producerId, roomId }) => {
 
   useEffect(() => {
     if (!socket || !device || !producerId || !roomId) return;
-
+  
+    let isMounted = true; 
+  
     const setupConsumer = async () => {
       try {
         setIsStream(true);
+  
         const transport = await createConsumeTransport(roomId);
         const [firstStream] = await consumeMedia(transport, roomId, producerId);
-
+  
         console.log("firstStream", firstStream.stream);
-
-        if (videoRef.current) {
+  
+        if (isMounted && videoRef.current) {
           videoRef.current.srcObject = firstStream.stream;
+          videoRef.current.play().catch((err) => {
+            console.warn("Auto-play failed:", err);
+          });
         }
-
-        await socket.emit("resumePausedConsumers", {
-          roomId,
-          producerId: producerId,
-        });
+  
+        socket.emit(
+          "resumePausedConsumers",
+          { roomId, producerId },
+          ({ success }) => {
+            if (success) {
+              console.log("Consumer resumed successfully");
+            } else {
+              console.log("Error in resuming consumer");
+            }
+          }
+        );
       } catch (err) {
         console.error("Error setting up consumer:", err);
       }
     };
-
+  
     setupConsumer();
+  
+    return () => {
+      isMounted = false; 
+    };
   }, [socket, device, producerId, roomId]);
+  
 
   return (
     <div className="main-consumer-box">

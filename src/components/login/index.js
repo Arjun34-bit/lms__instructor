@@ -10,6 +10,7 @@ import {
 } from "antd";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
+import { TbCircleLetterB } from "react-icons/tb";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Controller } from "react-hook-form";
@@ -101,6 +102,8 @@ const Login = () => {
     }
   };
 
+  const handleBiomophoneSignIn = async () => {};
+
   return (
     <div
       style={{
@@ -114,7 +117,7 @@ const Login = () => {
         height: "100vh",
       }}
     >
-      <Title level={2}>Instructor Login</Title>
+      <Title level={2}></Title>
       <Text type="secondary">Sign in to your account</Text>
       {error && (
         <Alert message={error} type="error" showIcon className="my-2" />
@@ -187,6 +190,11 @@ const Login = () => {
           shape="circle"
           icon={<FaFacebook size={20} />}
           onClick={handleFacebookSignIn}
+        />
+        <Button
+          shape="circle"
+          icon={<TbCircleLetterB size={20} />}
+          onClick={handleBiomophoneSignIn}
         />
       </div>
       <div style={{ marginTop: "10px" }}>

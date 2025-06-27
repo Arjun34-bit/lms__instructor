@@ -15,6 +15,8 @@ import toast from "react-hot-toast";
 function LiveClass() {
   const mediaSoupURL = process.env.REACT_APP_MEDIASOUP_SOCKET_URL;
 
+  console.log(mediaSoupURL);
+
   const initializedRef = useRef(false);
   const navigate = useNavigate();
 
@@ -65,7 +67,7 @@ function LiveClass() {
 
     socket.emit(
       "join-room",
-      { roomId: classId, userName: "Instructor" },
+      { roomId: classId, userName: "Instructor" ,role:"instructor"},
       (data) => {
         console.log("Join room response:", data);
         if (data?.rtpCapabilities) {
@@ -82,8 +84,8 @@ function LiveClass() {
     });
 
     socket.on("user-left", ({ message, userName }) => {
-      toast.info(message);
-      console.log(`${userName} left`);
+      toast.info("Someone Left");
+      // console.log(`${userName} left`);
     });
 
     const handleUserCount = ({ roomId, userCount }) => {
@@ -108,6 +110,10 @@ function LiveClass() {
     if (!socket) return;
 
     socket.on("new-producer", async (data) => {
+      if(socket?.id === data?.peerId){
+        console.log("Same PeerID")
+        return
+      }
       console.log("New producer available", data);
 
       setRemoteProducers((prev) => {
@@ -124,7 +130,7 @@ function LiveClass() {
     return () => {
       socket.off("new-producer");
     };
-  }, [socket, remoteProducers]);
+  }, [socket]);
 
   const leaveRoom = () => {
     socket.emit("leave-room", {
