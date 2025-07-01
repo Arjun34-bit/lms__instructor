@@ -67,7 +67,7 @@ function LiveClass() {
 
     socket.emit(
       "join-room",
-      { roomId: classId, userName: "Instructor" ,role:"instructor"},
+      { roomId: classId, userName: "Instructor", role: "instructor" },
       (data) => {
         console.log("Join room response:", data);
         if (data?.rtpCapabilities) {
@@ -84,7 +84,7 @@ function LiveClass() {
     });
 
     socket.on("user-left", ({ message, userName }) => {
-      toast.info("Someone Left");
+      // toast.info("Someone Left");
       // console.log(`${userName} left`);
     });
 
@@ -106,14 +106,14 @@ function LiveClass() {
   }, []);
 
   useEffect(() => {
-    console.log("hello");
     if (!socket) return;
 
-    socket.on("new-producer", async (data) => {
-      if(socket?.id === data?.peerId){
-        console.log("Same PeerID")
-        return
-      }
+    const handleNewProducer = (data) => {
+      // if (socket.id === data?.peerId) {
+      //   console.log("Same PeerID");
+      //   return;
+      // }
+
       console.log("New producer available", data);
 
       setRemoteProducers((prev) => {
@@ -123,12 +123,12 @@ function LiveClass() {
         }
         return prev;
       });
-    });
+    };
 
-    console.log("remote producer", remoteProducers);
+    socket.on("new-producer", handleNewProducer);
 
     return () => {
-      socket.off("new-producer");
+      socket.off("new-producer", handleNewProducer);
     };
   }, [socket]);
 

@@ -6,6 +6,8 @@ const ConsumerBox = ({ socket, device, producerId, roomId }) => {
   const [isStream, setIsStream] = useState(false);
   const [consumerTransport, setConsumerTransport] = useState(null);
 
+  console.log(producerId, roomId);
+
   const createConsumeTransport = (roomId) => {
     return new Promise((resolve, reject) => {
       if (!device || !socket) return reject("Device or socket not ready");
@@ -20,6 +22,10 @@ const ConsumerBox = ({ socket, device, producerId, roomId }) => {
           setConsumerTransport(transport);
 
           transport.on("connect", ({ dtlsParameters }, callback, errback) => {
+            if (transport.connectionState === "connected") {
+              console.warn("Consumer transport already connected");
+              return;
+            }
             socket.emit(
               "connectConsumerTransport",
               { roomId, dtlsParameters },
@@ -49,7 +55,7 @@ const ConsumerBox = ({ socket, device, producerId, roomId }) => {
           producerId,
         },
         async ({ params }) => {
-          console.log("params",params)
+          console.log("params", params);
           if (!params || params.error) {
             const errMsg = params?.error || "Error during media consumption";
             return reject(new Error(errMsg));
@@ -64,7 +70,7 @@ const ConsumerBox = ({ socket, device, producerId, roomId }) => {
               kind: params.kind,
               rtpParameters: params.rtpParameters,
             });
-  
+
             const stream = new MediaStream([consumer.track]);
             resolve([{ consumer, stream }]);
           } catch (err) {
@@ -77,25 +83,26 @@ const ConsumerBox = ({ socket, device, producerId, roomId }) => {
 
   useEffect(() => {
     if (!socket || !device || !producerId || !roomId) return;
-  
-    let isMounted = true; 
-  
+
+    // let isMounted = true;
+
     const setupConsumer = async () => {
       try {
         setIsStream(true);
-  
+
         const transport = await createConsumeTransport(roomId);
+        console.log("transport", transport);
         const [firstStream] = await consumeMedia(transport, roomId, producerId);
-  
-        console.log("firstStream", firstStream.stream);
-  
-        if (isMounted && videoRef.current) {
+
+        console.log("firstStream", firstStream.stream.getTracks());
+
+        if (videoRef.current) {
           videoRef.current.srcObject = firstStream.stream;
           videoRef.current.play().catch((err) => {
             console.warn("Auto-play failed:", err);
           });
         }
-  
+
         socket.emit(
           "resumePausedConsumers",
           { roomId, producerId },
@@ -111,14 +118,13 @@ const ConsumerBox = ({ socket, device, producerId, roomId }) => {
         console.error("Error setting up consumer:", err);
       }
     };
-  
+
     setupConsumer();
-  
+
     return () => {
-      isMounted = false; 
+      // isMounted = false;
     };
   }, [socket, device, producerId, roomId]);
-  
 
   return (
     <div className="main-consumer-box">
