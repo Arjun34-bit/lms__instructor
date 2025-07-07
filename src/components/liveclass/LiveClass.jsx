@@ -107,30 +107,53 @@ function LiveClass() {
 
   useEffect(() => {
     if (!socket) return;
-
+  
     const handleNewProducer = (data) => {
-      // if (socket.id === data?.peerId) {
-      //   console.log("Same PeerID");
-      //   return;
-      // }
-
       console.log("New producer available", data);
-
+  
       setRemoteProducers((prev) => {
-        const exists = prev.some((p) => p.producerId === data.producerId);
-        if (!exists) {
-          return [...prev, data];
+        const index = prev.findIndex((p) => p.peerId === data.peerId);
+  
+        if (index !== -1) {
+          // Update existing peer entry with new producer type
+          const updated = [...prev];
+          const existing = updated[index];
+  
+          if (data.label === "audio") {
+            updated[index] = {
+              ...existing,
+              audioProducerId: data.producerId,
+            };
+          } else if (data.label === "camera") {
+            updated[index] = {
+              ...existing,
+              videoProducerId: data.producerId,
+            };
+          }
+  
+          return updated;
+        } else {
+          // Create new entry
+          return [
+            ...prev,
+            {
+              peerId: data.peerId,
+              roomId: data.roomId,
+              audioProducerId: data.label === "audio" ? data.producerId : null,
+              videoProducerId: data.label === "camera" ? data.producerId : null,
+            },
+          ];
         }
-        return prev;
       });
     };
-
+  
     socket.on("new-producer", handleNewProducer);
-
+  
     return () => {
       socket.off("new-producer", handleNewProducer);
     };
   }, [socket]);
+  
 
   const leaveRoom = () => {
     socket.emit("leave-room", {
@@ -669,71 +692,19 @@ function LiveClass() {
         </div> */}
       </div>
       <div className="status">Current Participants: {viewerCount}</div>
-      {/* <div className="button-container">
-        <button
-          onClick={startCamera}
-          disabled={!!cameraStream}
-          className="button"
-        >
-          Start Camera
-        </button>
-        <button
-          onClick={stopCamera}
-          disabled={!cameraStream}
-          className="button"
-        >
-          Stop Camera
-        </button>
-        <button
-          onClick={startAudio}
-          disabled={!!audioStream}
-          className="button"
-        >
-          Start Audio
-        </button>
-        <button onClick={stopAudio} disabled={!audioStream} className="button">
-          Stop Audio
-        </button>
-        <button
-          onClick={startScreenShare}
-          disabled={!!screenStream}
-          className="button"
-        >
-          Start Screen Share
-        </button>
-        <button
-          onClick={stopScreenShare}
-          disabled={!screenStream}
-          className="button"
-        >
-          Stop Screen Share
-        </button>
-        <button onClick={getRouterRtpCapabilities} className="button">
-          Get Router RTP Capabilities
-        </button>
-        <button onClick={createDevice} className="button">
-          Create Device
-        </button>
-        <button onClick={createSendTransport} className="button">
-          Create Send Transport
-        </button>
-        <button onClick={connectSendTransport} className="button">
-          Connect Send Transport
-        </button>
-      </div> */}
-
-      {/* <div>
-        <ConsumerBox socket={socket} device={device} />
-      </div> */}
-      {remoteProducers.map((producerInfo) => (
-        <ConsumerBox
-          key={producerInfo.producerId}
+      <div class="flex overflow-x-auto scrollbar-hide space-x-4">
+        {remoteProducers.map((producerInfo) => (
+          <ConsumerBox
+          key={producerInfo.peerId}
           socket={socket}
           device={device}
-          producerId={producerInfo.producerId}
+          audioProducerId={producerInfo.audioProducerId}
+          videoProducerId={producerInfo.videoProducerId}
           roomId={producerInfo.roomId}
         />
       ))}
+      </div>
+      
     </main>
   );
 }

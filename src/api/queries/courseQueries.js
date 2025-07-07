@@ -14,17 +14,12 @@ export const fetchAssignedCoursesStatsApi = async () => {
   return data;
 };
 
-
 export const addCourseApi = async (payload) => {
-  const { data } = await axiosClient.post(
-    `/instructor/course`,
-    payload,
-    {
-      headers: { "Content-Type": "multipart/form-data" },
-    }
-  );
+  const { data } = await axiosClient.post(`/instructor/course`, payload, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return data;
-}
+};
 export const getAllCoursesApi = async (pageNumber = 1) => {
   const { data } = await axiosClient.get(
     `/instructor/course/all-courses?pageNumber=${pageNumber}`
@@ -32,11 +27,7 @@ export const getAllCoursesApi = async (pageNumber = 1) => {
   return data;
 };
 
-
 export const getAllCoursesApiWithoutPageNo = async () => {
-  const { data } = await axiosClient.get(
-    `/instructor/course/assigned-courses`
-  );
+  const { data } = await axiosClient.get(`/instructor/course/assigned-courses`);
   return data;
 };
-
