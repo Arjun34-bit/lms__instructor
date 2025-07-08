@@ -107,18 +107,18 @@ function LiveClass() {
 
   useEffect(() => {
     if (!socket) return;
-  
+
     const handleNewProducer = (data) => {
       console.log("New producer available", data);
-  
+
       setRemoteProducers((prev) => {
         const index = prev.findIndex((p) => p.peerId === data.peerId);
-  
+
         if (index !== -1) {
           // Update existing peer entry with new producer type
           const updated = [...prev];
           const existing = updated[index];
-  
+
           if (data.label === "audio") {
             updated[index] = {
               ...existing,
@@ -130,7 +130,7 @@ function LiveClass() {
               videoProducerId: data.producerId,
             };
           }
-  
+
           return updated;
         } else {
           // Create new entry
@@ -145,15 +145,41 @@ function LiveClass() {
           ];
         }
       });
+
+      console.log("remoteProducer", remoteProducers);
     };
-  
+
     socket.on("new-producer", handleNewProducer);
-  
+
     return () => {
       socket.off("new-producer", handleNewProducer);
     };
   }, [socket]);
-  
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleUserLeft = ({ producerIds, userName }) => {
+      console.log(
+        `${userName} left the room. Removing producers...`,
+        producerIds
+      );
+
+      setRemoteProducers((prev) =>
+        prev.filter(
+          (p) =>
+            !producerIds.includes(p.audioProducerId) &&
+            !producerIds.includes(p.videoProducerId)
+        )
+      );
+    };
+
+    socket.on("user-left", handleUserLeft);
+
+    return () => {
+      socket.off("user-left", handleUserLeft);
+    };
+  }, [socket]);
 
   const leaveRoom = () => {
     socket.emit("leave-room", {
@@ -695,16 +721,15 @@ function LiveClass() {
       <div class="flex overflow-x-auto scrollbar-hide space-x-4">
         {remoteProducers.map((producerInfo) => (
           <ConsumerBox
-          key={producerInfo.peerId}
-          socket={socket}
-          device={device}
-          audioProducerId={producerInfo.audioProducerId}
-          videoProducerId={producerInfo.videoProducerId}
-          roomId={producerInfo.roomId}
-        />
-      ))}
+            key={producerInfo.peerId}
+            socket={socket}
+            device={device}
+            audioProducerId={producerInfo.audioProducerId}
+            videoProducerId={producerInfo.videoProducerId}
+            roomId={producerInfo.roomId}
+          />
+        ))}
       </div>
-      
     </main>
   );
 }

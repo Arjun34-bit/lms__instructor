@@ -10,10 +10,14 @@ import AntdSpinner from "../Spinner/Spinner";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import AddCourse from "./add-course/AddCourse";
+import AddLession from "./add-lession/AddLession";
 
 const Course = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [openAddCourseModal, setOpenAddCourseModal] = useState(false);
+
+  const [openAddLessionModal, setOpenAddLessionModal] = useState(false);
+  const [selectedCourseId, setSelectedCourseId] = useState(null);
 
   const {
     data: assignedCoursesData,
@@ -35,7 +39,12 @@ const Course = () => {
     keepPreviousData: true,
   });
 
-  const courseColumns = getCourseColumns();
+  const handleAddLessionClick = (courseId) => {
+    setSelectedCourseId(courseId);
+    setOpenAddLessionModal(true);
+  };
+
+  const courseColumns = getCourseColumns(handleAddLessionClick);
 
   if (assignedCoursesDataLoading || assignedCoursesStatsDataLoading) {
     return <AntdSpinner />;
@@ -154,6 +163,16 @@ const Course = () => {
         onClose={() => setOpenAddCourseModal(false)}
         assignedCourseRefetch={assignedCourseRefetch}
         assignedCourseStatsRefetch={assignedCourseStatsRefetch}
+      />
+
+      {/* Add Lession Modal */}
+      <AddLession
+        visible={openAddLessionModal}
+        onClose={() => {
+          setOpenAddLessionModal(false);
+          setSelectedCourseId(null);
+        }}
+        courseId={selectedCourseId}
       />
     </div>
   );

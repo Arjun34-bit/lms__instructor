@@ -1,4 +1,4 @@
-import { Tag } from "antd";
+import { Button, Tag } from "antd";
 
 const approvalStatusColor = (approvalStatus) => {
   switch (approvalStatus) {
@@ -9,11 +9,11 @@ const approvalStatusColor = (approvalStatus) => {
     case "declined":
       return "red";
     default:
-      return "orange"
+      return "orange";
   }
 };
 
-export const getCourseColumns = () => [
+export const getCourseColumns = (onAddLessionClick) => [
   {
     title: "Title",
     dataIndex: "title",
@@ -23,6 +23,11 @@ export const getCourseColumns = () => [
     title: "Level",
     dataIndex: "level",
     key: "level",
+  },
+  {
+    title: "Lessions",
+    dataIndex: "lessions",
+    key: "lessions",
   },
   {
     title: "Start Date",
@@ -51,6 +56,18 @@ export const getCourseColumns = () => [
     render: (approvalStatus) => {
       const color = approvalStatusColor(approvalStatus);
       return <Tag color={color}>{approvalStatus.toUpperCase()}</Tag>;
+    },
+  },
+  {
+    title: "Add Lession",
+    dataIndex: "addLession",
+    key: "addLession",
+    render: (_, record) => {
+      return (
+        <Button type="primary" onClick={() => onAddLessionClick(record.id)}>
+          Add Lession
+        </Button>
+      );
     },
   },
 ];
