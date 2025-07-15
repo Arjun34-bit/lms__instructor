@@ -1,84 +1,228 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Button,
   Form,
   Input,
   Modal,
-  Select,
-  DatePicker,
   Alert,
   Space,
+  Switch,
+  Divider,
 } from "antd";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import dayjs from "dayjs";
-import { useQuery } from "@tanstack/react-query";
-import {
-  fetchAllMasterDataApi,
-  fetchSubjectsApi,
-} from "../../../api/queries/commonQueries";
-import AntdSpinner from "../../Spinner/Spinner";
-import toast from "react-hot-toast";
-import { addCourseApi } from "../../../api/queries/courseQueries";
 import { lessionSchema } from "./schema/lessionSchema";
+import toast from "react-hot-toast";
+import { addLessionApi } from "../../../api/queries/lessionQueries";
+import { addAllLectures, formatDuration } from "../../../utils/helper";
 
-const { Option } = Select;
+const VideoList = ({ control, lectureIndex }) => {
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: `lectures.${lectureIndex}.videos`,
+  });
 
-const AddLession = ({ visible, onClose, selectedCourseId }) => {
+  const [previews, setPreviews] = useState({});
+  const [orientations, setOrientations] = useState({});
+  const [durations, setDurations] = useState(0);
+
+  const handleFileChange = (e, videoIndex, onChange) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      setPreviews((prev) => ({ ...prev, [videoIndex]: null }));
+      setOrientations((prev) => ({ ...prev, [videoIndex]: null }));
+      onChange(null);
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.src = previewUrl;
+
+    video.onloadedmetadata = () => {
+      URL.revokeObjectURL(video.src);
+      const { duration, videoWidth, videoHeight } = video;
+
+      const orientation =
+        videoWidth > videoHeight
+          ? "Landscape"
+          : videoWidth < videoHeight
+          ? "Portrait"
+          : "Square";
+
+      if (orientation === "Portrait") {
+        toast.error(
+          "Portrait videos are not allowed. Please upload a landscape video."
+        );
+        setPreviews((prev) => ({ ...prev, [videoIndex]: null }));
+        setOrientations((prev) => ({ ...prev, [videoIndex]: null }));
+        onChange(null);
+      } else {
+        setDurations(duration);
+        setPreviews((prev) => ({ ...prev, [videoIndex]: previewUrl }));
+        setOrientations((prev) => ({ ...prev, [videoIndex]: orientation }));
+        onChange(file);
+      }
+    };
+  };
+
+  return (
+    <div className="space-y-3">
+      {fields.map((item, videoIndex) => (
+        <div
+          key={item.id}
+          className="p-4 rounded-md border bg-blue-300 shadow-sm"
+        >
+          <Form.Item label="Video Title">
+            <Controller
+              name={`lectures.${lectureIndex}.videos.${videoIndex}.title`}
+              control={control}
+              render={({ field }) => (
+                <Input {...field} placeholder="Video Title" />
+              )}
+            />
+          </Form.Item>
+
+          <Form.Item label="Video Description">
+            <Controller
+              name={`lectures.${lectureIndex}.videos.${videoIndex}.description`}
+              control={control}
+              render={({ field }) => (
+                <Input.TextArea
+                  {...field}
+                  rows={2}
+                  placeholder="Video Description"
+                />
+              )}
+            />
+          </Form.Item>
+
+          <Form.Item label="Upload Video File">
+            <Controller
+              name={`lectures.${lectureIndex}.videos.${videoIndex}.file`}
+              control={control}
+              render={({ field }) => (
+                <Input
+                  type="file"
+                  accept="video/*"
+                  onChange={(e) =>
+                    handleFileChange(e, videoIndex, field.onChange)
+                  }
+                />
+              )}
+            />
+          </Form.Item>
+          {durations ? <p>Duration : {formatDuration(durations)}</p> : ""}
+
+          {previews[videoIndex] && (
+            <div className="mt-2">
+              <video
+                src={previews[videoIndex]}
+                width="50%"
+                controls
+                autoplay
+                style={{ borderRadius: "8px", border: "1px solid #ccc" }}
+              />
+            </div>
+          )}
+
+          <Button danger type="link" onClick={() => remove(videoIndex)}>
+            Remove Video
+          </Button>
+        </div>
+      ))}
+
+      <Button
+        type="dashed"
+        onClick={() => append({ title: "", description: "", file: null })}
+      >
+        + Add Video
+      </Button>
+    </div>
+  );
+};
+
+const AddLession = ({ visible, onClose, courseId }) => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [subjects, setSubjects] = useState([]);
+  const [isSubmittings, setIsSubmitting] = useState(false);
 
   const {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
+    getValues,
+    setValue,
   } = useForm({
     resolver: zodResolver(lessionSchema),
-    lectures: [
-      {
-        courseId: selectedCourseId || "",
-        lectureName: "",
-        description: "",
-        videos: null,
-      },
-    ],
+    defaultValues: {
+      lectures: [
+        {
+          courseId: courseId || "",
+          lectureName: "",
+          description: "",
+          isFreePreview: false,
+          videos: [],
+        },
+      ],
+    },
   });
 
-  console.log(selectedCourseId);
-
-  const { fields, append, remove } = useFieldArray({
+  const {
+    fields: lectureFields,
+    append: appendLecture,
+    remove: removeLecture,
+  } = useFieldArray({
     control,
     name: "lectures",
   });
 
+  useEffect(() => {
+    if (courseId) {
+      reset({
+        lectures: [
+          {
+            courseId: courseId,
+            lectureName: "",
+            description: "",
+            isFreePreview: false,
+            videos: [],
+          },
+        ],
+      });
+    }
+  }, [courseId, reset]);
+
   const handleClose = () => {
-    reset({
-      lectures: [
-        {
-          courseId: selectedCourseId || "",
-          lectureName: "",
-          description: "",
-          videos: null,
-        },
-      ],
-    });
+    reset();
     onClose();
   };
 
   const onSubmit = async (data) => {
     try {
-      console.log(data);
-    } catch (error) {
-      setError("Failed to add course. Please try again.");
-      toast.error(error?.response?.data?.message || error?.message);
+      setIsSubmitting(true);
+      const res = await addAllLectures(data.lectures);
+
+      if (res) {
+        toast.success("Lecture(s) submitted successfully!");
+        reset();
+        setSuccess("Lecture(s) added.");
+        setTimeout(() => {
+          setSuccess("");
+          onClose();
+        }, 1000);
+
+        setError("");
+      }
+      setIsSubmitting(false);
+    } catch (err) {
+      setIsSubmitting(false);
+      setError("Failed to add lectures. Please try again.");
+      toast.error(err?.response?.data?.message || err?.message);
     }
   };
-
-  //   if (masterDataLoading) {
-  //     return <AntdSpinner />;
-  //   }
 
   return (
     <Modal
@@ -96,30 +240,43 @@ const AddLession = ({ visible, onClose, selectedCourseId }) => {
       )}
 
       <Form layout="vertical" onFinish={handleSubmit(onSubmit)}>
-        {fields.map((field, index) => (
+        {lectureFields.map((lecture, lectureIndex) => (
           <div
-            key={field.id}
-            className="mb-6 p-4 border rounded-md bg-gray-50 shadow-sm"
-            style={{ padding: 16 }}
+            key={lecture.id}
+            className="mb-6 p-4 border bg-blue-300 !bg-blue-300 rounded-md shadow-sm"
           >
-            <h4 className="font-semibold mb-2">Lecture {index + 1}</h4>
+            <div className="flex justify-between items-center">
+              <h4 className="font-semibold mb-2 text-lg">
+                Lecture {lectureIndex + 1}
+              </h4>
+              <div>
+                <Form.Item label="Free Preview">
+                  <Controller
+                    name={`lectures.${lectureIndex}.isFreePreview`}
+                    control={control}
+                    render={({ field }) => (
+                      <Switch
+                        checked={field.value}
+                        onChange={(val) => field.onChange(val)}
+                      />
+                    )}
+                  />
+                </Form.Item>
+              </div>
+            </div>
+
             <Form.Item
               label="Lecture Name"
               validateStatus={
-                errors?.lectures?.[index]?.lectureName ? "error" : ""
+                errors?.lectures?.[lectureIndex]?.lectureName ? "error" : ""
               }
-              help={errors?.lectures?.[index]?.lectureName?.message}
-              required
+              help={errors?.lectures?.[lectureIndex]?.lectureName?.message}
             >
               <Controller
-                name={`lectures.${index}.lectureName`}
+                name={`lectures.${lectureIndex}.lectureName`}
                 control={control}
                 render={({ field }) => (
-                  <Input
-                    {...field}
-                    placeholder="Enter Lecture Name"
-                    size="small"
-                  />
+                  <Input {...field} placeholder="Enter Lecture Name" />
                 )}
               />
             </Form.Item>
@@ -127,13 +284,12 @@ const AddLession = ({ visible, onClose, selectedCourseId }) => {
             <Form.Item
               label="Description"
               validateStatus={
-                errors?.lectures?.[index]?.description ? "error" : ""
+                errors?.lectures?.[lectureIndex]?.description ? "error" : ""
               }
-              help={errors?.lectures?.[index]?.description?.message}
-              required
+              help={errors?.lectures?.[lectureIndex]?.description?.message}
             >
               <Controller
-                name={`lectures.${index}.description`}
+                name={`lectures.${lectureIndex}.description`}
                 control={control}
                 render={({ field }) => (
                   <Input.TextArea
@@ -146,34 +302,18 @@ const AddLession = ({ visible, onClose, selectedCourseId }) => {
               />
             </Form.Item>
 
-            <Form.Item
-              label="Video"
-              validateStatus={errors?.lectures?.[index]?.videos ? "error" : ""}
-              help={errors?.lectures?.[index]?.videos?.message}
-              required
-            >
-              <Controller
-                name={`lectures.${index}.videos`}
-                control={control}
-                render={({ field }) => (
-                  <Input
-                    type="file"
-                    accept="video/*"
-                    size="small"
-                    onChange={(e) => field.onChange(e.target.files[0])}
-                  />
-                )}
-              />
-            </Form.Item>
+            <Divider orientation="left">Videos</Divider>
+            <VideoList control={control} lectureIndex={lectureIndex} />
 
-            {index > 0 && (
+            {lectureIndex > 0 && (
               <Button
+                disabled={isSubmittings}
                 danger
                 type="link"
-                onClick={() => remove(index)}
+                onClick={() => removeLecture(lectureIndex)}
                 size="small"
               >
-                Remove
+                Remove Lecture
               </Button>
             )}
           </div>
@@ -182,20 +322,27 @@ const AddLession = ({ visible, onClose, selectedCourseId }) => {
         <Space className="mb-4">
           <Button
             type="dashed"
+            disabled={isSubmittings}
             onClick={() =>
-              append({
-                courseId: selectedCourseId || "",
+              appendLecture({
+                courseId: courseId || "",
                 lectureName: "",
                 description: "",
-                videos: null,
+                isFreePreview: false,
+                videos: [],
               })
             }
           >
             + Add Lecture
           </Button>
 
-          <Button type="primary" htmlType="submit" loading={false}>
-            Submit All
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={isSubmitting}
+            disabled={isSubmittings}
+          >
+            Submit
           </Button>
         </Space>
       </Form>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button, Form, Input, Modal, Select, Alert } from "antd";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,6 +14,8 @@ import {
   getAllCoursesApi,
 } from "../../../api/queries/courseQueries";
 import { addReelAPi } from "../../../api/queries/reelQueries";
+import { formatDuration } from "../../../utils/helper";
+import { genComponentStyleHook } from "antd/es/theme/internal";
 
 const AddReel = ({ visible, onClose }) => {
   const [error, setError] = useState("");
@@ -39,6 +41,7 @@ const AddReel = ({ visible, onClose }) => {
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
+    watch,
   } = useForm({
     resolver: zodResolver(addReelSchema),
     defaultValues: {
@@ -51,9 +54,80 @@ const AddReel = ({ visible, onClose }) => {
     },
   });
 
+  const selectedCourseId = watch("courseId");
+
+  const [courseLessions, setCourseLessions] = useState([]);
+
+  useEffect(() => {
+    const getCourseLession = (courseId) => {
+      const selectedCourse = assignedCoursesData?.data?.find(
+        (course) => course.id === courseId
+      );
+      const lessions = selectedCourse?.CourseLession || [];
+      setCourseLessions(lessions);
+    };
+
+    reset((prev) => ({ ...prev, courseLessionId: "" }));
+
+    if (selectedCourseId) {
+      getCourseLession(selectedCourseId);
+    }
+  }, [selectedCourseId, assignedCoursesData]);
+
+  const [previews, setPreviews] = useState();
+  const [orientations, setOrientations] = useState({});
+  const [durations, setDurations] = useState(0);
+
+  const handleFileChange = (e, onChange) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      setPreviews(null);
+      setOrientations(null);
+      onChange(null);
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.src = previewUrl;
+
+    video.onloadedmetadata = () => {
+      URL.revokeObjectURL(video.src);
+      const { duration, videoWidth, videoHeight } = video;
+
+      const orientation =
+        videoWidth > videoHeight
+          ? "Landscape"
+          : videoWidth < videoHeight
+          ? "Portrait"
+          : "Square";
+
+      if (orientation === "Landscape") {
+        toast.error(
+          "Landscape videos are not allowed. Please upload a Potrait video."
+        );
+        setPreviews(null);
+        setOrientations(null);
+        onChange(null);
+      } else {
+        setDurations(duration);
+        setPreviews(previewUrl);
+        setOrientations(orientation);
+        onChange(file);
+      }
+    };
+  };
+
   const onSubmit = async (data) => {
     try {
-      const res = await addReelAPi(data);
+      const formData = new FormData();
+      formData.append("title", data.title);
+      formData.append("description", data.description || "");
+      formData.append("courseId", data.courseId);
+      formData.append("courseLessionId", data.courseLessionId || "");
+      formData.append("video", data.video);
+      const res = await addReelAPi(formData);
       setSuccess(`${res?.data?.title} Reel has been added successfully`);
       toast.success(`${res?.data?.title} Reel has been added successfully`);
       reset();
@@ -175,11 +249,11 @@ const AddReel = ({ visible, onClose }) => {
 
         <Form.Item
           label="Select Course Lession"
-          validateStatus={errors.courseLessonId ? "error" : ""}
-          help={errors.courseLessonId?.message}
+          validateStatus={errors.courseLessionId ? "error" : ""}
+          help={errors.courseLessionId?.message}
         >
           <Controller
-            name="courseLession"
+            name="courseLessionId"
             control={control}
             render={({ field }) => (
               <Select
@@ -189,9 +263,9 @@ const AddReel = ({ visible, onClose }) => {
                 onChange={(val) => field.onChange(val)}
                 onBlur={field.onBlur}
                 value={field.value}
-                options={assignedCoursesData?.data?.map((tag) => ({
+                options={courseLessions?.map((tag) => ({
                   value: tag?.id,
-                  label: tag?.title,
+                  label: tag?.lectureName,
                 }))}
                 showSearch
                 filterOption={(input, option) =>
@@ -214,11 +288,27 @@ const AddReel = ({ visible, onClose }) => {
               <input
                 type="file"
                 accept="video/*"
-                onChange={(e) => field.onChange(e.target.files[0])}
+                onChange={(e) => handleFileChange(e, field.onChange)}
               />
             )}
           />
         </Form.Item>
+
+        {durations ? <p>Duration : {formatDuration(durations)}</p> : ""}
+
+        {previews && (
+          <div className="mt-2">
+            <video
+              src={previews}
+              width="45%"
+              height="300px"
+              controls
+              muted
+              playsInline
+              style={{ borderRadius: "8px", border: "1px solid #ccc" }}
+            />
+          </div>
+        )}
 
         <Form.Item>
           <Button type="primary" htmlType="submit" block>

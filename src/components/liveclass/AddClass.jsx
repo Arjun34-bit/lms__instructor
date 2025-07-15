@@ -7,21 +7,33 @@ import dayjs from "dayjs";
 import { useQuery } from "@tanstack/react-query";
 import { cousedummydata } from "./data/data";
 import toast from "react-hot-toast";
-import { addLiveClassApi } from "../../api/queries/classesQueries";
+import {
+  addLiveClassApi,
+  fetchLiveClassesApi,
+} from "../../api/queries/classesQueries";
 import AntdSpinner from "../Spinner/Spinner";
-import { getAllCoursesApiWithoutPageNo } from "../../api/queries/courseQueries";
+import {
+  fetchAssignedCoursesApi,
+  getAllCoursesApiWithoutPageNo,
+} from "../../api/queries/courseQueries";
 
-const AddClass = ({
-  visible,
-  onClose,
-  classesRefetch,
-}) => {
+const AddClass = ({ visible, onClose, classesRefetch }) => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   const { data: coursesData, isLoading: coursesLoading } = useQuery({
     queryKey: ["courses"],
     queryFn: getAllCoursesApiWithoutPageNo(),
+    keepPreviousData: true,
+  });
+
+  const {
+    data: assignedCoursesData,
+    isLoading: assignedCoursesDataLoading,
+    refetch: assignedCourseRefetch,
+  } = useQuery({
+    queryKey: ["assignedCoursesData"],
+    queryFn: () => fetchAssignedCoursesApi(),
     keepPreviousData: true,
   });
 
@@ -43,9 +55,11 @@ const AddClass = ({
 
   const onSubmit = async (data) => {
     try {
-        console.log(data ,"add live class data");
+      console.log(data, "add live class data");
       const addedClass = await addLiveClassApi(data);
-      setSuccess(`Class "${addedClass?.data?.title}" has been scheduled successfully`);
+      setSuccess(
+        `Class "${addedClass?.data?.title}" has been scheduled successfully`
+      );
       toast.success(`Class scheduled successfully`);
       reset();
       setTimeout(() => {
@@ -64,7 +78,12 @@ const AddClass = ({
   }
 
   return (
-    <Modal title="Schedule New Class" open={visible} onCancel={onClose} footer={null}>
+    <Modal
+      title="Schedule New Class"
+      open={visible}
+      onCancel={onClose}
+      footer={null}
+    >
       {error && (
         <Alert message={error} type="error" showIcon className="my-2" />
       )}
@@ -117,8 +136,8 @@ const AddClass = ({
             control={control}
             render={({ field }) => (
               <Select {...field} placeholder="Select course">
-                {cousedummydata &&
-                  cousedummydata?.map((course, index) => (
+                {assignedCoursesData &&
+                  assignedCoursesData?.data?.map((course, index) => (
                     <Select.Option key={index} value={course?.id}>
                       {course?.title}
                     </Select.Option>
@@ -127,7 +146,7 @@ const AddClass = ({
             )}
           />
         </Form.Item>
-       
+
         <Form.Item
           label="Start Date & Time"
           validateStatus={errors.startDate ? "error" : ""}

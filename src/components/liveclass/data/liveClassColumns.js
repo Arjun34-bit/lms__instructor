@@ -1,6 +1,5 @@
 import { Button, Tag } from "antd";
 
-
 const checkIfLiveClass = (startTime, endTime, status) => {
   if (status !== "approved") {
     return false;
@@ -8,8 +7,6 @@ const checkIfLiveClass = (startTime, endTime, status) => {
   const now = new Date();
   return new Date(startTime) <= now && now <= new Date(endTime);
 };
-
-
 
 export const getLiveClassColumns = (handleInstructorClassRoomJoin) => [
   {
@@ -21,6 +18,7 @@ export const getLiveClassColumns = (handleInstructorClassRoomJoin) => [
     title: "Course",
     dataIndex: "course",
     key: "course",
+    render: (course) => course?.title || "-",
   },
   {
     title: "Start Time",
@@ -36,27 +34,46 @@ export const getLiveClassColumns = (handleInstructorClassRoomJoin) => [
   },
   {
     title: "Status",
-    dataIndex: "status",
+    dataIndex: "approvalStatus",
     key: "status",
-    render: (status) => {
-      const color = status === "approved" ? "green" : "orange";
-      return <Tag color={color}>{status.toUpperCase()}</Tag>;
+    render: (approvalStatus) => {
+      const color = approvalStatus === "approved" ? "green" : "orange";
+      return <Tag color={color}>{approvalStatus?.toUpperCase()}</Tag>;
+    },
+  },
+  {
+    title: "Link",
+    dataIndex: "urlLink",
+    key: "urlLink",
+    render: (urlLink) => {
+      if (urlLink !== "" && urlLink !== null) {
+        return (
+          <Button className="bg-primary text-white px-4">Share Link</Button>
+        );
+      } else {
+        <span className="bg-primary text-red-200 px-4">
+          Link Not Provided.
+        </span>;
+      }
     },
   },
   {
     title: "Join",
     key: "join",
     render: (record) => {
-      console.log(record);  
-      const { classId, startTime, endTime, status } = record;
-      const isLive = checkIfLiveClass(startTime, endTime, status);
-      if (isLive) {
-       
+      const { id, title, startTime, endTime, approvalStatus } = record;
+      const isLive = checkIfLiveClass(startTime, endTime, approvalStatus);
+      if (!isLive) {
         return (
           <Button
             className="bg-primary text-white px-4"
             // onClick={() => handleInstructorClassRoomJoin(classId)}
-            onClick={() => window.location.href = `/live-class-room/${classId}`}
+            onClick={() =>
+              (window.location.href = `/live-class-room/${title
+                ?.split(" ")
+                .join("")
+                ?.toLowerCase()}-${id}`)
+            }
           >
             Join
           </Button>

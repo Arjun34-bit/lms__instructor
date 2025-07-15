@@ -6,7 +6,12 @@ import WhiteBoard from "./WhiteBoard";
 
 import { MdCallEnd, MdScreenShare, MdStopScreenShare } from "react-icons/md";
 import { MdDraw } from "react-icons/md";
-import { BsCameraVideoFill, BsCameraVideoOffFill } from "react-icons/bs";
+import {
+  BsCameraVideoFill,
+  BsCameraVideoOffFill,
+  BsRecordCircle,
+  BsRecordCircleFill,
+} from "react-icons/bs";
 import { BiSolidMicrophone, BiSolidMicrophoneOff } from "react-icons/bi";
 import ConsumerBox from "./ConsumerBox";
 import { useParams, useNavigate } from "react-router-dom";
@@ -40,6 +45,8 @@ function LiveClass() {
   const [remoteProducers, setRemoteProducers] = useState([]);
 
   const [canvasStream, setCanvasStream] = useState(null);
+
+  const [recording, setRecording] = useState(false);
 
   const [toggleCamera, setToggleCamera] = useState(false);
   const [toggleAudio, setToggleAudio] = useState(false);
@@ -643,12 +650,36 @@ function LiveClass() {
     }
   }, [socket]);
 
+  // const handleRecord = () => {
+  //   if (!recording) {
+  //     socket.emit("start-recording", { roomId: classId }, ({ success }) => {
+  //       toast.success(
+  //         success ? "You Started Recording" : "Start Recording Failed"
+  //       );
+  //     });
+  //   } else {
+  //     socket.emit("stop-recording", { roomId: classId }, ({ success }) => {
+  //       toast.success(
+  //         success ? "You Stopped Recording" : "Stop Recording Failed"
+  //       );
+  //     });
+  //   }
+  //   setRecording(!recording);
+  // };
+
   return (
     <main className="main">
       <div className="video-container">
         <div className="nav-content">
           <div>RoomId : {classId}</div>
           <div className="nav-btns">
+            <button className="n-btns">
+              {recording ? (
+                <BsRecordCircleFill size={20} />
+              ) : (
+                <BsRecordCircle size={20} />
+              )}
+            </button>
             <button className="n-btns" onClick={handleCamera}>
               {toggleCamera ? (
                 <BsCameraVideoOffFill size={20} />

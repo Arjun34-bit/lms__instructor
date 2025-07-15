@@ -8,11 +8,31 @@ import AntdSpinner from "../Spinner/Spinner";
 import { useState } from "react";
 import AddReel from "./add-reel/addReel";
 import { getReelColumns } from "./add-reel/data/reelColumn";
+import { getAllReelAPi } from "../../api/queries/reelQueries";
+import { useQuery } from "@tanstack/react-query";
+import PreviewReel from "./PreviewReel";
 const Reel = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [openAddReel, setOpenAddReel] = useState(false);
+  const [openPreview, setOpenPreview] = useState(false);
+  const [url, setUrl] = useState("");
 
-  const reelsColumn = getReelColumns();
+  const {
+    data: ReelData,
+    isLoading,
+    refetch: ReelDataRefetch,
+  } = useQuery({
+    queryKey: ["ReelData"],
+    queryFn: () => getAllReelAPi(),
+    keepPreviousData: true,
+  });
+
+  const handlePreview = (link) => {
+    setUrl(link);
+    setOpenPreview(true);
+  };
+
+  const reelsColumn = getReelColumns(handlePreview);
 
   return (
     <div
@@ -102,11 +122,20 @@ const Reel = () => {
           columns={reelsColumn}
           bordered
           rowKey="id"
+          dataSource={Array.isArray(ReelData?.data) ? ReelData.data : []}
         />
       </div>
 
       {/* Add Reel Modal */}
       <AddReel visible={openAddReel} onClose={() => setOpenAddReel(false)} />
+      <PreviewReel
+        visible={openPreview}
+        videoUrl={url}
+        onClose={() => {
+          setOpenPreview(false);
+          setUrl("");
+        }}
+      />
     </div>
   );
 };

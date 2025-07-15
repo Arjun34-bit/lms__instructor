@@ -36,9 +36,9 @@ export const addCourseSchema = z
   })
   .refine((data) => data.startDate >= new Date(), {
     message: "Start date must be today or later",
-    path: ["startDate"], // Specifies the error field
+    path: ["startDate"],
   })
   .refine((data) => data.endDate > data.startDate, {
     message: "End date must be after the start date",
-    path: ["endDate"], // Specifies the error field
+    path: ["endDate"],
   });

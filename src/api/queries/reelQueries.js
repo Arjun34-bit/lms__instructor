@@ -10,3 +10,8 @@ export const addReelAPi = async (payload) => {
   );
   return data;
 };
+
+export const getAllReelAPi = async () => {
+  const { data } = await axiosClient.get(`/instructor/reel/`);
+  return data;
+};

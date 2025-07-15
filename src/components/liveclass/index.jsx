@@ -20,7 +20,7 @@ const LiveClasses = () => {
 
   const handleInstructorClassRoomJoin = (classId) => {
     const user = getLocalStorageUser();
-    socket?.emit("joinInstructor", { classId, role: user?.role, });
+    socket?.emit("joinInstructor", { classId, role: user?.role });
   };
 
   const handleJoinInstructorResponse = useCallback(
@@ -44,10 +44,10 @@ const LiveClasses = () => {
   const {
     data: liveClassesData,
     isLoading,
-    refetch: liveClassesRefetch
+    refetch: liveClassesRefetch,
   } = useQuery({
-    queryKey: ["liveClassesData", currentPage],
-    queryFn: () => fetchLiveClassesApi(currentPage),
+    queryKey: ["liveClassesData"],
+    queryFn: () => fetchLiveClassesApi(),
     keepPreviousData: true,
   });
 
@@ -72,8 +72,10 @@ const LiveClasses = () => {
           </div>
         </div>
         <div style={{ marginRight: "20px" }}>
-          <Button type="primary" style={{padding: "20px 10px"}}
-           onClick={() => setIsModalVisible(true)}
+          <Button
+            type="primary"
+            style={{ padding: "20px 10px" }}
+            onClick={() => setIsModalVisible(true)}
           >
             <FiPlusCircle style={{ fontSize: "20px" }} /> Schedule New Class
           </Button>
@@ -82,18 +84,13 @@ const LiveClasses = () => {
 
       {/* upcoming classes */}
       <div>
-        <Card
-          style={{ width: "18rem", marginTop: "30px" }}
-          bordered={true}
-        >
+        <Card style={{ width: "18rem", marginTop: "30px" }} bordered={true}>
           <Card.Meta
-            avatar={
-              <GiCalendar style={{ fontSize: "30px" }} /> 
-            }
+            avatar={<GiCalendar style={{ fontSize: "30px" }} />}
             title="Upcoming Classes"
             description={
               <div>
-                <p style={{fontSize: 17, fontWeight: 600}}>2</p>
+                <p style={{ fontSize: 17, fontWeight: 600 }}>2</p>
               </div>
             }
           />
@@ -106,17 +103,17 @@ const LiveClasses = () => {
           columns={liveClassColumns}
           bordered
           // dataSource={data?.data || []  }
-           dataSource={liveClassData}
-
+          dataSource={
+            Array.isArray(liveClassesData?.data) ? liveClassesData.data : []
+          }
         />
       </div>
-      <AddClass 
-    visible={isModalVisible}
-    onClose={() => setIsModalVisible(false)}
-    classesRefetch={liveClassesRefetch}
-  />
+      <AddClass
+        visible={isModalVisible}
+        onClose={() => setIsModalVisible(false)}
+        classesRefetch={liveClassesRefetch}
+      />
     </div>
-    
   );
 };
 

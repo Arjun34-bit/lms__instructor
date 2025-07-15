@@ -1,8 +1,19 @@
 import { z } from "zod";
 
 export const lessionSchema = z.object({
-  courseId: z.string().min(1, "Course ID is required"),
-  lectureName: z.string().min(1, "Lecture name is required"),
-  description: z.string().min(1, "Description is required"),
-  videos: z.string().min(1, "Videos field is required"),
+  lectures: z.array(
+    z.object({
+      courseId: z.string(),
+      lectureName: z.string().min(4, { message: "Lecture name is required" }),
+      description: z.string().min(10, { message: "Description is required" }),
+      isFreePreview: z.boolean().optional(),
+      videos: z.array(
+        z.object({
+          title: z.string().min(1, { message: "Title is required" }),
+          description: z.string().optional(),
+          file: z.any(),
+        })
+      ),
+    })
+  ),
 });

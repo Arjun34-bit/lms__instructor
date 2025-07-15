@@ -1,4 +1,4 @@
-import { Tag } from "antd";
+import { Button, Tag } from "antd";
 
 const approvalStatusColor = (approvalStatus) => {
   switch (approvalStatus) {
@@ -13,7 +13,7 @@ const approvalStatusColor = (approvalStatus) => {
   }
 };
 
-export const getReelColumns = () => [
+export const getReelColumns = (handlePreview) => [
   {
     title: "Title",
     dataIndex: "title",
@@ -25,22 +25,18 @@ export const getReelColumns = () => [
     key: "description",
   },
   {
-    title: "Tags",
-    dataIndex: "tags",
-    key: "tags",
-  },
-  {
     title: "Preview",
-    dataIndex: "preview",
-    key: "preview",
-  },
-  {
-    title: "Status",
-    dataIndex: "approvalStatus",
-    key: "approvalStatus",
-    render: (approvalStatus) => {
-      const color = approvalStatusColor(approvalStatus);
-      return <Tag color={color}>{approvalStatus.toUpperCase()}</Tag>;
+    dataIndex: "fileUrl",
+    key: "fileUrl",
+    render: (fileUrl) => {
+      return (
+        <Button
+          className="bg-primary text-white px-4"
+          onClick={() => handlePreview(fileUrl)}
+        >
+          Preview
+        </Button>
+      );
     },
   },
 ];
