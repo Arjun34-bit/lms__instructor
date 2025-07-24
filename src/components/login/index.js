@@ -1,3 +1,4 @@
+import "./Login.css";
 import React, { useState } from "react";
 import {
   Button,
@@ -10,7 +11,6 @@ import {
 } from "antd";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
-import { TbCircleLetterB } from "react-icons/tb";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Controller } from "react-hook-form";
@@ -27,6 +27,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { loginSchema } from "./schema/loginSchema";
 import { signOut } from "firebase/auth";
+
 const { Title, Text } = Typography;
 
 const Login = () => {
@@ -102,105 +103,110 @@ const Login = () => {
     }
   };
 
-  const handleBiomophoneSignIn = async () => {};
-
   return (
-    <div
-      style={{
-        width: 600,
-        margin: "auto",
-        padding: "2rem",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
-        height: "100vh",
-      }}
-    >
-      <Title level={2}></Title>
-      <Text type="secondary">Sign in to your account</Text>
-      {error && (
-        <Alert message={error} type="error" showIcon className="my-2" />
-      )}
-      {success && (
-        <Alert message={success} type="success" showIcon className="my-2" />
-      )}
-      <Form
-        layout="vertical"
-        style={{ width: "100%" }}
-        onFinish={handleSubmit(onLoginSubmit)}
-      >
-        <Form.Item
-          label="Email"
-          validateStatus={errors.email ? "error" : ""}
-          help={errors.email?.message}
+    <div className="main-container">
+      <div className="logo-container">
+        <div className="card-heading">
+          <div className="stars">★ ★ ★ BEST ★ ★ ★</div>
+          <div className="title">INSTRUCTOR</div>
+          <div className="year">IN 2025</div>
+          <hr className="divider" />
+        </div>
+
+        <div className="img-container">
+          <img src="https://media.istockphoto.com/id/1231898401/vector/%C3%B0%C3%B1%C3%B0%C3%B0%C3%B0%C3%B0%C3%B1%C3%B0%C2%B5-rgb.jpg?s=612x612&w=0&k=20&c=OpAH1-b7qULawK00Kia-uB9Y8IjBdQ9SuZ_hMph4VS4=" />
+        </div>
+
+        <div className="card-footer">
+          <span className="txt">Start Your </span>
+          <span className="txt-ins">INSTRUCTOR</span>
+          <span className="txt">career</span>
+
+          <p>Let's Learn</p>
+        </div>
+      </div>
+
+      <div className="form-container">
+        <Title level={2}></Title>
+        <Text type="secondary">Login in to your account</Text>
+        {error && (
+          <Alert message={error} type="error" showIcon className="my-2" />
+        )}
+        {success && (
+          <Alert message={success} type="success" showIcon className="my-2" />
+        )}
+        <Form
+          layout="vertical"
+          style={{ width: "100%" }}
+          onFinish={handleSubmit(onLoginSubmit)}
         >
-          <Controller
-            name="email"
-            control={control}
-            render={({ field }) => (
-              <Input {...field} placeholder="Enter your email" />
-            )}
-          />
-        </Form.Item>
-        <Form.Item
-          label="Password"
-          validateStatus={errors.password ? "error" : ""}
-          help={errors.password?.message}
-        >
-          <Controller
-            name="password"
-            control={control}
-            render={({ field }) => (
-              <Input.Password {...field} placeholder="Enter your password" />
-            )}
-          />
-        </Form.Item>
-        <div>
-          <Form.Item>
+          <Form.Item
+            label="Email"
+            validateStatus={errors.email ? "error" : ""}
+            help={errors.email?.message}
+          >
             <Controller
-              name="rememberMe"
+              name="email"
               control={control}
               render={({ field }) => (
-                <Checkbox {...field} checked={field.value === true}>
-                  Remember me
-                </Checkbox>
+                <Input {...field} placeholder="Enter your email" />
               )}
             />
           </Form.Item>
-          <Form.Item>
-            <Button type="primary" htmlType="submit" block>
-              {isSubmitting ? "Logging in..." : "Log in"}
-            </Button>
+          <Form.Item
+            label="Password"
+            validateStatus={errors.password ? "error" : ""}
+            help={errors.password?.message}
+          >
+            <Controller
+              name="password"
+              control={control}
+              render={({ field }) => (
+                <Input.Password {...field} placeholder="Enter your password" />
+              )}
+            />
           </Form.Item>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <Link to={"/register"}>Create an account</Link>
-            <Link to={"/forgot-password"}>Forgot your password?</Link>
+          <div>
+            <Form.Item>
+              <Controller
+                name="rememberMe"
+                control={control}
+                render={({ field }) => (
+                  <Checkbox {...field} checked={field.value === true}>
+                    Remember me
+                  </Checkbox>
+                )}
+              />
+            </Form.Item>
+            <Form.Item>
+              <Button type="primary" htmlType="submit" block>
+                {isSubmitting ? "Logging in..." : "Log in"}
+              </Button>
+            </Form.Item>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <Link to={"/register"}>Create an account</Link>
+              {/* <Link to={"/forgot-password"}>Forgot your password?</Link> */}
+            </div>
           </div>
+        </Form>
+        <Divider>OR</Divider>
+        <div style={{ display: "flex", justifyContent: "center", gap: "1rem" }}>
+          <button className="google-btn" onClick={handleGoogleSignIn}>
+            <i>
+              <FcGoogle size={20} />
+            </i>
+          </button>
+          {/* <Button
+            shape="circle"
+            icon={<FaFacebook size={20} />}
+            onClick={handleFacebookSignIn}
+          /> */}
         </div>
-      </Form>
-      <Divider>OR</Divider>
-      <div style={{ display: "flex", justifyContent: "center", gap: "1rem" }}>
-        <Button
-          shape="circle"
-          icon={<FcGoogle size={20} />}
-          onClick={handleGoogleSignIn}
-        />
-        <Button
-          shape="circle"
-          icon={<FaFacebook size={20} />}
-          onClick={handleFacebookSignIn}
-        />
-        <Button
-          shape="circle"
-          icon={<TbCircleLetterB size={20} />}
-          onClick={handleBiomophoneSignIn}
-        />
-      </div>
-      <div style={{ marginTop: "10px" }}>
-        <Link to="/login-phone">
-          <Button block>Login with Phone Number</Button>
-        </Link>
+        <div style={{ marginTop: "10px" }}>
+          <Link to="/login-phone">
+            <Button block>Login with Phone Number</Button>
+          </Link>
+        </div>
       </div>
     </div>
   );

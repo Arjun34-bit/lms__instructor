@@ -1,5 +1,5 @@
 // src/firebaseConfig.js
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps, getApp, deleteApp } from "firebase/app";
 import {
   FacebookAuthProvider,
   getAuth,
@@ -8,17 +8,32 @@ import {
   signOut,
 } from "firebase/auth";
 
+// const firebaseConfig = {
+//   apiKey: "AIzaSyBa_nvuocb7atvfwioFA2LNJMZBkL2rc2w",
+//   authDomain: "pcc-mobile-app-84266.firebaseapp.com",
+//   projectId: "pcc-mobile-app-84266",
+//   storageBucket: "pcc-mobile-app-84266.appspot.com",
+//   messagingSenderId: "30873318956",
+//   appId: "1:30873318956:web:35aae1bc2cc6c97ac18389",
+//   measurementId: "G-1572PJXEVT",
+// };
+
 const firebaseConfig = {
-  apiKey: "AIzaSyBa_nvuocb7atvfwioFA2LNJMZBkL2rc2w",
-  authDomain: "pcc-mobile-app-84266.firebaseapp.com",
-  projectId: "pcc-mobile-app-84266",
-  storageBucket: "pcc-mobile-app-84266.appspot.com",
-  messagingSenderId: "30873318956",
-  appId: "1:30873318956:web:35aae1bc2cc6c97ac18389",
-  measurementId: "G-1572PJXEVT",
+  apiKey: "AIzaSyBMEvlesuIKEyXfYVnhBTx1JCsCcELOobM",
+  authDomain: "let-s-learn-20ff9.firebaseapp.com",
+  projectId: "let-s-learn-20ff9",
+  storageBucket: "let-s-learn-20ff9.firebasestorage.app",
+  messagingSenderId: "1003858431422",
+  appId: "1:1003858431422:web:e83d6fa648564c0243bdef",
+  measurementId: "G-41LQ6ECZY4",
 };
 
 // Initialize Firebase
+
+if (getApps().length > 0) {
+  deleteApp(getApp());
+}
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 

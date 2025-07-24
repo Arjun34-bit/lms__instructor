@@ -1,5 +1,5 @@
 {
-  "name": "instructor-dashboard",
+  "name": "lms_instructor",
   "version": "0.1.0",
   "private": true,
   "dependencies": {

@@ -39,7 +39,7 @@
 button {
   margin-top: 20px;
   padding: 10px 20px;
-  background-color: #4CAF50;
+  background-color: #4caf50;
   color: white;
   border: none;
   border-radius: 5px;
@@ -65,7 +65,8 @@ input {
   height: 100vh;
 }
 
-.join-room-container, .room-container {
+.join-room-container,
+.room-container {
   text-align: center;
 }
 
@@ -93,4 +94,3 @@ input {
   background-color: #335edd;
   color: white;
 }
-
