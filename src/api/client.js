@@ -7,10 +7,12 @@ import toast from "react-hot-toast";
 export const handleUnauthorized = (message) => {
   localStorage.clear();
   toast.error(message || "Please login again.");
-  
+
   // Emit an event that React can listen to
   window.dispatchEvent(new CustomEvent("unauthorized"));
 };
+
+console.log(envConstant.BACKEND_BASE_URL);
 
 const axiosClient = axios.create({
   baseURL: envConstant.BACKEND_BASE_URL,
